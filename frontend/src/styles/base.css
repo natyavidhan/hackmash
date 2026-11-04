@@ -65,6 +65,15 @@
   box-sizing: border-box;
 }
 
+/* Safety net: nothing may widen the page sideways. `clip`, not `hidden`, so
+   the root is not turned into a second scroller and position: sticky (the
+   header) keeps working. */
+html,
+body {
+  max-width: 100%;
+  overflow-x: clip;
+}
+
 html {
   -webkit-text-size-adjust: 100%;
   text-size-adjust: 100%;
@@ -86,6 +95,8 @@ body {
   text-rendering: optimizeLegibility;
   caret-color: var(--pen);
   accent-color: var(--pen);
+  /* a long URL or unbroken title wraps instead of pushing the layout wider */
+  overflow-wrap: break-word;
 }
 
 ::selection {
@@ -125,9 +136,16 @@ button:disabled {
   cursor: not-allowed;
 }
 
-img {
-  display: block;
+img,
+svg,
+video {
   max-width: 100%;
+}
+
+img,
+video {
+  display: block;
+  height: auto;
 }
 
 h1,

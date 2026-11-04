@@ -1,95 +1,136 @@
 /* The notice taken down from the board and read up close ------------------ */
 
+/* The dialog is the overlay: it fills the viewport and centres the card with
+   grid, so no transform is needed for positioning and the open animation is
+   free to use translate/rotate. `dialog:not([open])` stays display:none. */
 .sheet {
-  width: min(680px, 100%);
-  max-width: 100%;
-  height: 100dvh;
+  position: fixed;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  max-width: none;
   max-height: none;
-  margin: 0 0 0 auto;
-  padding: 0;
+  margin: 0;
+  padding:
+    max(16px, env(safe-area-inset-top)) max(16px, env(safe-area-inset-right))
+    max(16px, env(safe-area-inset-bottom)) max(16px, env(safe-area-inset-left));
   border: 0;
   background: transparent;
-  overflow: visible;
-}
-
-.sheet::backdrop {
-  background: rgb(30 16 4 / 0.48);
+  overflow-x: hidden;
+  overflow-y: auto;
+  overscroll-behavior: contain;
 }
 
 .sheet[open] {
-  animation: notice-down 0.36s var(--ease-out);
+  display: grid;
+  /* one track as wide as the overlay, so a long word can never widen it */
+  grid-template-columns: minmax(0, 1fr);
+  place-items: center;
 }
 
-@keyframes notice-down {
-  from {
-    transform: translateX(48px) rotate(1deg);
-    opacity: 0;
-  }
+.sheet::backdrop {
+  background: rgb(30 16 4 / 0.55);
 }
 
-.sheet__paper {
-  position: relative;
-  height: 100%;
-  overflow-y: auto;
-  overscroll-behavior: contain;
-  background: var(--cork);
-  background-image: url("../assets/cork.svg");
-  background-size: 200px 200px;
-  padding: 26px clamp(12px, 3vw, 26px) 40px;
+/* the board behind stays still while a notice is open */
+html:has(.sheet[open]) {
+  overflow: hidden;
 }
 
-.sheet__close {
-  position: sticky;
-  top: 0;
-  z-index: 5;
-  float: right;
-  margin: -12px -6px 0 0;
-  background: var(--paper);
-  box-shadow: var(--shadow-paper);
-}
-
-.sheet__close:hover {
-  background: var(--paper);
-  color: var(--stamp);
-}
-
-.sheet__notice {
+/* The notice taken down: a sheet of paper pinned at the top centre. */
+.sheet__card {
   --stock: var(--paper);
   position: relative;
-  clear: both;
-  padding: 30px clamp(18px, 4vw, 34px) 26px;
+  display: flex;
+  flex-direction: column;
+  box-sizing: border-box;
+  width: min(560px, 100%);
+  max-height: calc(100vh - 32px);
+  max-height: calc(100dvh - 32px);
+  margin: 0 auto;
   background: var(--stock);
   border-radius: var(--radius);
   box-shadow: var(--shadow-lift);
 }
 
-.sheet__notice--yellow {
+.sheet[open] .sheet__card {
+  animation: notice-down 0.36s var(--ease-out);
+}
+
+/* the pin drop: individual translate/rotate, never `transform`, so nothing
+   here can fight the card's layout */
+@keyframes notice-down {
+  from {
+    translate: 0 -14px;
+    rotate: -1deg;
+    opacity: 0;
+  }
+}
+
+.sheet__card--yellow {
   --stock: var(--paper-yellow);
 }
 
-.sheet__notice--blue {
+.sheet__card--blue {
   --stock: var(--paper-blue);
 }
 
-.sheet__notice--green {
+.sheet__card--green {
   --stock: var(--paper-green);
 }
 
-.sheet__notice--pink {
+.sheet__card--pink {
   --stock: var(--paper-pink);
 }
 
 .sheet__pin {
   top: -7px;
   left: calc(50% - 8px);
+  z-index: 3;
   width: 17px;
   height: 17px;
+}
+
+.sheet__close {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  z-index: 2;
+  width: 44px;
+  height: 44px;
+  background: var(--stock);
+}
+
+.sheet__close:hover {
+  background: rgb(29 23 18 / 0.08);
+  color: var(--stamp);
+}
+
+.sheet__scroll {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow-x: hidden;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  border-radius: inherit;
+}
+
+.sheet__notice {
+  min-width: 0;
+  padding: 30px clamp(18px, 4vw, 34px) 26px;
+  overflow-wrap: anywhere;
 }
 
 .sheet__head {
   display: flex;
   gap: 16px;
   align-items: flex-start;
+  /* clear of the close button in the card's corner */
+  padding-right: 36px;
+}
+
+.sheet__head > div {
+  min-width: 0;
 }
 
 .sheet__logo {
@@ -384,11 +425,7 @@
 }
 
 .sheet__empty {
-  clear: both;
-  margin-top: 40px;
-  padding: 30px;
-  background: var(--paper);
-  box-shadow: var(--shadow-paper);
+  padding: 30px 64px 30px 30px;
 }
 
 .sheet__empty p {

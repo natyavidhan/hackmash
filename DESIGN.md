@@ -42,7 +42,7 @@ Strategy: restrained. A cork field, with paper carrying the content and two inks
 - **Slips**: kraft quick-filter tags with a pin, slightly askew. When on, they turn ballpoint wash with a blue pin.
 - **Register** (list view): a ruled ledger with a 2 px ink header rule.
 - **Planner** (calendar view): a wall planner with paper slips per start and red "N closing" marks.
-- **Sheet** (`DetailSheet`): the notice taken down. A full paper sheet over cork in a right-hand `<dialog>`, with a stapled banner photo and a dashed ballpoint "your tab" box for tracking.
+- **Sheet** (`DetailSheet`): the notice taken down. A pinned paper card centred over the dimmed board in a `<dialog>` (at most 560 px wide, 16 px clear of every edge), its body scrolling inside the card while the pin and close button stay put, with a stapled banner photo and a dashed ballpoint "your tab" box for tracking.
 - **Tabs in the tracker** (`.tabcard`): perforated top edge (mask). Won is green stock, shortlisted yellow, finished grey.
 - **Report card**: a ruled marksheet table, not a hero-metric block.
 - **Buttons**: paper with a hairline border (`.btn`), `--ink` for primary actions, `--pen` for the visitor's own actions, ghost buttons on cork.
