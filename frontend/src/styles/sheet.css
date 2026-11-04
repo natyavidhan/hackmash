@@ -8,6 +8,7 @@
   inset: 0;
   width: 100%;
   height: 100%;
+  height: 100dvh;
   max-width: none;
   max-height: none;
   margin: 0;
@@ -16,15 +17,16 @@
     max(16px, env(safe-area-inset-bottom)) max(16px, env(safe-area-inset-left));
   border: 0;
   background: transparent;
-  overflow-x: hidden;
-  overflow-y: auto;
-  overscroll-behavior: contain;
+  /* never a scroller itself: the card fits inside and scrolls its own body */
+  overflow: hidden;
 }
 
 .sheet[open] {
   display: grid;
-  /* one track as wide as the overlay, so a long word can never widen it */
+  /* one cell exactly the size of the padded overlay, so a long word can never
+     widen it and the card's max-height below resolves against it */
   grid-template-columns: minmax(0, 1fr);
+  grid-template-rows: minmax(0, 1fr);
   place-items: center;
 }
 
@@ -45,8 +47,8 @@ html:has(.sheet[open]) {
   flex-direction: column;
   box-sizing: border-box;
   width: min(560px, 100%);
-  max-height: calc(100vh - 32px);
-  max-height: calc(100dvh - 32px);
+  /* the dialog's padded area, so the card stays clear of a notch or home bar */
+  max-height: 100%;
   margin: 0 auto;
   background: var(--stock);
   border-radius: var(--radius);
@@ -200,8 +202,15 @@ html:has(.sheet[open]) {
 
 .sheet__apply {
   min-height: 46px;
-  padding: 0 18px;
+  /* a long platform name wraps instead of running off the card */
+  max-width: 100%;
+  padding: 8px 18px;
   font-size: 1rem;
+  white-space: normal;
+}
+
+.sheet__apply svg {
+  flex: none;
 }
 
 .sheet__warnings {
