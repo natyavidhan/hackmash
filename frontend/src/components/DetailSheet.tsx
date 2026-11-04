@@ -138,8 +138,7 @@ export function DetailSheet() {
     };
 
     body = (
-      <article className={`sheet__notice sheet__notice--${STOCK[h.kind ?? "hackathon"]}`}>
-        <span className="pin pin--red sheet__pin" aria-hidden="true" />
+      <article className="sheet__notice">
         <header className="sheet__head">
           {h.logo_url && <img className="sheet__logo" src={h.logo_url} alt="" width={52} height={52} loading="lazy" referrerPolicy="no-referrer" />}
           <div>
@@ -349,6 +348,10 @@ export function DetailSheet() {
     );
   }
 
+  const stock = h ? STOCK[h.kind ?? "hackathon"] : "white";
+
+  // The dialog is the overlay that centres the card; the card holds the pin and
+  // the close button and never scrolls, so both stay put while its body scrolls.
   return (
     <dialog
       ref={ref}
@@ -361,11 +364,12 @@ export function DetailSheet() {
         if (e.target === e.currentTarget) close();
       }}
     >
-      <div className="sheet__paper paper-scroll">
+      <div className={`sheet__card sheet__card--${stock}`}>
+        {h && <span className="pin pin--red sheet__pin" aria-hidden="true" />}
         <button type="button" className="icon-btn sheet__close" onClick={close} aria-label="Close notice">
-          <X size={20} />
+          <X size={22} />
         </button>
-        {body}
+        <div className="sheet__scroll paper-scroll">{body}</div>
       </div>
     </dialog>
   );

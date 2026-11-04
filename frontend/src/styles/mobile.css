@@ -124,15 +124,7 @@
     border-top: 1px dashed var(--ink-line-2) !important;
   }
 
-  /* the notice taken down fills the phone; a thin cork edge keeps the world */
-  .sheet__paper {
-    padding: 14px 8px 32px;
-  }
-
-  .sheet__close {
-    margin: -4px 2px 0 0;
-  }
-
+  /* the notice taken down: the card fills the phone inside a 16px margin */
   .sheet__notice {
     padding: 26px 18px 22px;
   }
