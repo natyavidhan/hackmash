@@ -13,5 +13,12 @@
     "not_found_handling": "single-page-application",
     "run_worker_first": ["/api/*"]
   },
+  // hackmash.xyz is served by this Worker (Cloudflare creates the DNS records
+  // and certificate). www bounces to the apex from frontend/index.html.
+  "routes": [
+    { "pattern": "hackmash.xyz", "custom_domain": true },
+    { "pattern": "www.hackmash.xyz", "custom_domain": true }
+  ],
+  "workers_dev": true,
   "observability": { "enabled": true }
 }

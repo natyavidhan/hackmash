@@ -9,7 +9,7 @@ Devpost, Unstop, Devfolio, MLH, HackerEarth, Hack2skill, DoraHacks, ETHGlobal, l
 in one format, with filters that help you choose. Apply on the original platform; track what you applied to right here, with no account.
 </p>
 
-<p align="center"><a href="https://hackmash.natya.workers.dev"><strong>Open Hackmash →</strong></a></p>
+<p align="center"><a href="https://hackmash.xyz"><strong>hackmash.xyz →</strong></a></p>
 
 ![The Hackmash board: every platform's hackathons as notices pinned to one cork board](docs/screenshots/board.png)
 
