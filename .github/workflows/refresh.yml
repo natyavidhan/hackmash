@@ -4,8 +4,9 @@ name: Refresh listings and deploy
 # works exactly as tested), rebuild the web app with the fresh catalog baked in
 # as a static file, and deploy the whole thing to Cloudflare Workers.
 #
-# Needs repository secrets CLOUDFLARE_API_TOKEN and CLOUDFLARE_ACCOUNT_ID, and the
-# repository variable HACKMASH_URL (the deployed site, used to carry state over).
+# Setup: repository secret CLOUDFLARE_API_TOKEN; repository variables
+# CLOUDFLARE_ACCOUNT_ID (the job stays off until it is set) and HACKMASH_URL
+# (the deployed site, used to carry state over between runs).
 
 on:
   schedule:
@@ -21,6 +22,7 @@ concurrency:
 
 jobs:
   refresh-and-deploy:
+    if: ${{ vars.CLOUDFLARE_ACCOUNT_ID != '' }}
     runs-on: ubuntu-latest
     timeout-minutes: 30
     steps:
@@ -80,4 +82,4 @@ jobs:
         run: uv run pywrangler deploy
         env:
           CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
-          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ vars.CLOUDFLARE_ACCOUNT_ID }}

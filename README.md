@@ -202,7 +202,7 @@ Everything runs on Cloudflare's edge:
 One-time setup:
 
 1. Create a Cloudflare API token with the *Edit Cloudflare Workers* template.
-2. In the GitHub repo, add the secrets `CLOUDFLARE_API_TOKEN` and `CLOUDFLARE_ACCOUNT_ID`.
+2. In the GitHub repo, add the secret `CLOUDFLARE_API_TOKEN` and the variable `CLOUDFLARE_ACCOUNT_ID`. The workflow stays off until that variable exists.
 3. Run the workflow once (Actions → *Refresh listings and deploy* → Run workflow).
 4. Set the repository variable `HACKMASH_URL` to the deployed URL, so later runs carry state over.
 
