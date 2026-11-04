@@ -9,6 +9,8 @@ Devpost, Unstop, Devfolio, MLH, HackerEarth, Hack2skill, DoraHacks, ETHGlobal, l
 in one format, with filters that help you choose. Apply on the original platform; track what you applied to right here, with no account.
 </p>
 
+<p align="center"><a href="https://hackmash.natya.workers.dev"><strong>Open Hackmash →</strong></a></p>
+
 ![The Hackmash board: every platform's hackathons as notices pinned to one cork board](docs/screenshots/board.png)
 
 ## Why
@@ -232,3 +234,7 @@ docs/       research on student pain points and the platform landscape
 ## Responsible fetching
 
 Hackmash reads only public pages and public APIs, a few times a day, with bounded concurrency, retries with backoff and an identifying user agent. It links every listing back to its source and stores no personal data. If you run a platform listed here and want changes, open an issue.
+
+## Credits
+
+Thanks [Sushant](https://github.com/sushant-mishra-dtu/) for the idea.
