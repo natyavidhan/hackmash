@@ -1,0 +1,437 @@
+/* Hackmash: the campus notice board for every hackathon.
+   Cork field, paper stocks, toner ink, red stamps, blue ballpoint, push pins. */
+
+:root {
+  color-scheme: light;
+
+  /* the board */
+  --cork: #c69259;
+  --cork-shade: #ad783f;
+  --cork-ink: #2e1d0d; /* text placed straight on cork */
+  --cork-ink-2: #3f2a15;
+  --frame: #2a1c10;
+  --frame-2: #3b2817;
+  --frame-ink: #f7efe3;
+  --frame-ink-2: #cdbda6;
+
+  /* paper stocks: format is carried by the stock */
+  --paper: #fdfcf8;
+  --paper-yellow: #fff1a1;
+  --paper-blue: #dce9ff;
+  --paper-green: #d8f2df;
+  --paper-pink: #ffdfe8;
+  --paper-kraft: #ead6b3;
+  --rule: #c9d7ea;
+  --margin: #e6a0a0;
+
+  /* ink */
+  --ink: #1d1712;
+  --ink-2: #4f463c;
+  --ink-3: #6f665b;
+  --ink-line: rgb(29 23 18 / 0.16);
+  --ink-line-2: rgb(29 23 18 / 0.28);
+
+  --stamp: #c3122b; /* the board's warnings: deadlines, clashes, paid entry */
+  --stamp-wash: rgb(195 18 43 / 0.07);
+  --pen: #1e45c2; /* everything the visitor does */
+  --pen-wash: #e7edff;
+  --pen-line: rgb(30 69 194 / 0.35);
+  --live: #0f7a45;
+  --dayglo: #d4ff3a;
+
+  --pin-brass: #c9a23d;
+  --pin-red: #e0262f;
+  --pin-blue: #2459e6;
+  --pin-green: #16a057;
+
+  --font: "Archivo Variable", "Archivo", ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  --font-hand: "Kalam", "Segoe Print", "Bradley Hand", cursive;
+
+  --ease-out: cubic-bezier(0.16, 1, 0.3, 1);
+  --ease-in-out: cubic-bezier(0.65, 0, 0.35, 1);
+  --shadow-paper: 0 1px 1px rgb(52 28 6 / 0.22), 0 10px 18px -10px rgb(52 28 6 / 0.55);
+  --shadow-lift: 0 2px 3px rgb(52 28 6 / 0.2), 0 24px 34px -16px rgb(52 28 6 / 0.62);
+  --shadow-pin: 0 2px 2px rgb(20 10 0 / 0.35), 1px 4px 4px rgb(20 10 0 / 0.18);
+  --radius: 2px;
+
+  --page-max: 1480px;
+  --gutter: clamp(14px, 2.4vw, 28px);
+  --header-h: 60px;
+}
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html {
+  -webkit-text-size-adjust: 100%;
+  text-size-adjust: 100%;
+  scroll-padding-top: calc(var(--header-h) + 16px);
+}
+
+body {
+  margin: 0;
+  min-height: 100dvh;
+  font-family: var(--font);
+  font-size: 15px;
+  line-height: 1.45;
+  color: var(--ink);
+  background-color: var(--cork);
+  background-image: url("../assets/cork.svg");
+  background-size: 200px 200px;
+  font-variant-numeric: tabular-nums;
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+  caret-color: var(--pen);
+  accent-color: var(--pen);
+}
+
+::selection {
+  background: var(--dayglo);
+  color: var(--ink);
+}
+
+:focus-visible {
+  outline: 2px solid var(--pen);
+  outline-offset: 2px;
+  border-radius: 2px;
+}
+
+a {
+  color: inherit;
+  text-decoration-thickness: 1px;
+  text-underline-offset: 0.18em;
+}
+
+a:hover {
+  text-decoration-color: var(--pen);
+}
+
+button,
+input,
+select,
+textarea {
+  font: inherit;
+  color: inherit;
+}
+
+button {
+  cursor: pointer;
+}
+
+button:disabled {
+  cursor: not-allowed;
+}
+
+img {
+  display: block;
+  max-width: 100%;
+}
+
+h1,
+h2,
+h3,
+h4 {
+  margin: 0;
+  line-height: 1.12;
+  text-wrap: balance;
+}
+
+p {
+  margin: 0;
+  text-wrap: pretty;
+}
+
+/* scrollbars: walnut thumb on the cork, faint ink inside paper */
+html {
+  scrollbar-color: var(--frame-2) var(--cork-shade);
+}
+
+.paper-scroll {
+  scrollbar-color: var(--ink-line-2) transparent;
+  scrollbar-width: thin;
+}
+
+.visually-hidden {
+  position: absolute !important;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+.skip-link {
+  position: absolute;
+  left: 12px;
+  top: -60px;
+  z-index: 100;
+  padding: 8px 14px;
+  background: var(--paper);
+  color: var(--ink);
+  box-shadow: var(--shadow-paper);
+  font-weight: 650;
+}
+
+.skip-link:focus {
+  top: 10px;
+}
+
+/* shared atoms ----------------------------------------------------------- */
+
+.condensed {
+  font-stretch: 72%;
+}
+
+.hand {
+  font-family: var(--font-hand);
+  font-weight: 400;
+  color: var(--pen);
+}
+
+.paper {
+  background: var(--paper);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow-paper);
+}
+
+.pin {
+  --pin-color: var(--pin-brass);
+  position: absolute;
+  width: 15px;
+  height: 15px;
+  border-radius: 50%;
+  background:
+    radial-gradient(circle at 34% 32%, rgb(255 255 255 / 0.75) 0 1.6px, transparent 2.4px),
+    radial-gradient(circle at 60% 65%, rgb(0 0 0 / 0.18), transparent 70%),
+    var(--pin-color);
+  box-shadow: var(--shadow-pin);
+  pointer-events: none;
+}
+
+.pin--red {
+  --pin-color: var(--pin-red);
+}
+
+.pin--blue {
+  --pin-color: var(--pin-blue);
+}
+
+.pin--green {
+  --pin-color: var(--pin-green);
+}
+
+/* rubber stamp: condensed caps in red ink, slightly askew, with grain */
+.stamp {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 0.45em;
+  padding: 4px 8px 3px;
+  border: 2px solid currentColor;
+  border-radius: 3px;
+  color: var(--stamp);
+  font-weight: 760;
+  font-stretch: 70%;
+  font-size: 0.82rem;
+  line-height: 1.05;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  transform: rotate(var(--tilt, -2deg));
+  -webkit-mask-image: url("../assets/stamp-grain.svg");
+  mask-image: url("../assets/stamp-grain.svg");
+  -webkit-mask-size: 120px 40px;
+  mask-size: 120px 40px;
+  white-space: nowrap;
+}
+
+.stamp--live {
+  color: var(--live);
+}
+
+.stamp--quiet {
+  color: var(--ink-2);
+}
+
+.stamp--pen {
+  color: var(--pen);
+}
+
+.stamp small {
+  font-size: 0.86em;
+  font-weight: 600;
+  letter-spacing: 0.03em;
+}
+
+/* day-glo "new" sticker */
+.sticker {
+  display: inline-grid;
+  place-items: center;
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background: var(--dayglo);
+  color: var(--ink);
+  font-weight: 800;
+  font-stretch: 75%;
+  font-size: 0.72rem;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  transform: rotate(12deg);
+  box-shadow: 0 1px 1px rgb(40 50 0 / 0.25), 0 4px 6px -3px rgb(40 50 0 / 0.4);
+}
+
+/* buttons: paper slips and ink */
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  min-height: 38px;
+  padding: 0 14px;
+  border: 1px solid var(--ink-line-2);
+  border-radius: var(--radius);
+  background: var(--paper);
+  color: var(--ink);
+  font-weight: 620;
+  font-size: 0.92rem;
+  text-decoration: none;
+  white-space: nowrap;
+  transition:
+    background-color 0.18s var(--ease-out),
+    border-color 0.18s var(--ease-out),
+    transform 0.18s var(--ease-out),
+    box-shadow 0.18s var(--ease-out);
+}
+
+.btn:hover {
+  border-color: var(--ink-2);
+  box-shadow: 0 3px 8px -4px rgb(52 28 6 / 0.35);
+}
+
+.btn:active {
+  transform: translateY(1px);
+}
+
+.btn:disabled {
+  opacity: 0.5;
+  box-shadow: none;
+}
+
+.btn--ink {
+  background: var(--ink);
+  border-color: var(--ink);
+  color: var(--paper);
+}
+
+.btn--ink:hover {
+  background: #000;
+  border-color: #000;
+}
+
+.btn--pen {
+  background: var(--pen);
+  border-color: var(--pen);
+  color: #fff;
+}
+
+.btn--pen:hover {
+  background: #1838a3;
+  border-color: #1838a3;
+}
+
+.btn--ghost {
+  background: transparent;
+  border-color: transparent;
+}
+
+.btn--ghost:hover {
+  background: rgb(29 23 18 / 0.06);
+  border-color: transparent;
+  box-shadow: none;
+}
+
+.btn--sm {
+  min-height: 32px;
+  padding: 0 10px;
+  font-size: 0.85rem;
+}
+
+.btn svg {
+  flex: none;
+}
+
+.icon-btn {
+  display: inline-grid;
+  place-items: center;
+  width: 36px;
+  height: 36px;
+  padding: 0;
+  border: 0;
+  border-radius: var(--radius);
+  background: transparent;
+  color: inherit;
+  transition: background-color 0.15s var(--ease-out);
+}
+
+.icon-btn:hover {
+  background: rgb(29 23 18 / 0.08);
+}
+
+.field {
+  width: 100%;
+  min-height: 38px;
+  padding: 7px 10px;
+  border: 1px solid var(--ink-line-2);
+  border-radius: var(--radius);
+  background: var(--paper);
+  color: var(--ink);
+}
+
+.field:focus {
+  outline: none;
+  border-color: var(--pen);
+  box-shadow: 0 0 0 3px var(--pen-wash);
+}
+
+textarea.field {
+  resize: vertical;
+  line-height: 1.5;
+}
+
+select.field {
+  appearance: none;
+  padding-right: 30px;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1.5l5 5 5-5' fill='none' stroke='%231d1712' stroke-width='1.6'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 10px center;
+}
+
+.kbd {
+  display: inline-grid;
+  place-items: center;
+  min-width: 20px;
+  height: 20px;
+  padding: 0 5px;
+  border: 1px solid var(--ink-line-2);
+  border-bottom-width: 2px;
+  border-radius: 3px;
+  font-size: 0.72rem;
+  font-weight: 650;
+  color: var(--ink-3);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}

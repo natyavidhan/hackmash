@@ -1,0 +1,612 @@
+/* My tabs: the tabs you tore off, laid out by how far along you are --------- */
+
+.tracker__head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.tracker__tools {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.tracker__tools .btn {
+  box-shadow: var(--shadow-paper);
+  border-color: transparent;
+}
+
+.tracker__empty {
+  margin-top: 48px;
+}
+
+.tracker__empty-note {
+  font-size: 1.7rem;
+  transform: rotate(-2deg);
+}
+
+.tracker__overview {
+  display: grid;
+  grid-template-columns: minmax(280px, 0.85fr) minmax(0, 1.4fr);
+  gap: 26px;
+  margin-top: 26px;
+  align-items: start;
+}
+
+/* report card: a ruled marksheet */
+.reportcard {
+  padding: 18px 20px 16px;
+  transform: rotate(-0.4deg);
+}
+
+.reportcard__title,
+.diary__title {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding-bottom: 8px;
+  border-bottom: 2px solid var(--ink);
+  font-weight: 820;
+  font-stretch: 72%;
+  font-size: 1.2rem;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+}
+
+.reportcard__table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.reportcard__table th,
+.reportcard__table td {
+  padding: 7px 0;
+  border-bottom: 1px solid var(--rule);
+  font-size: 0.93rem;
+}
+
+.reportcard__table th {
+  font-weight: 520;
+  text-align: left;
+  color: var(--ink-2);
+}
+
+.reportcard__table td {
+  font-weight: 760;
+  text-align: right;
+}
+
+.reportcard__months {
+  display: grid;
+  gap: 6px;
+  margin-top: 14px;
+  font-size: 0.86rem;
+  color: var(--ink-2);
+}
+
+.reportcard__months .is-heavy {
+  color: var(--ink);
+}
+
+.reportcard__warn {
+  color: var(--stamp);
+  font-weight: 600;
+}
+
+/* diary: dated lines */
+.diary {
+  padding: 18px 20px 16px;
+}
+
+.diary__clash {
+  display: flex;
+  align-items: baseline;
+  gap: 12px;
+  margin: 12px 0 2px;
+  font-size: 0.9rem;
+}
+
+.diary__clash .stamp {
+  flex: none;
+  font-size: 0.74rem;
+}
+
+.diary__list {
+  margin: 8px 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.diary__list li {
+  display: grid;
+  grid-template-columns: 112px minmax(0, 1fr) auto;
+  gap: 12px;
+  align-items: baseline;
+  padding: 8px 0;
+  border-bottom: 1px solid var(--rule);
+  font-size: 0.9rem;
+}
+
+.diary__date {
+  display: grid;
+  font-weight: 700;
+}
+
+.diary__date small {
+  color: var(--ink-3);
+  font-weight: 520;
+  font-size: 0.78rem;
+}
+
+.diary__what a {
+  font-weight: 650;
+}
+
+.diary__left {
+  color: var(--ink-2);
+  font-weight: 650;
+  font-size: 0.82rem;
+}
+
+.diary__list li.is-urgent .diary__left,
+.diary__list li.is-urgent .diary__date {
+  color: var(--stamp);
+}
+
+.diary__cal {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 14px;
+}
+
+.diary__hint {
+  margin-top: 8px;
+  color: var(--ink-3);
+  font-size: 0.8rem;
+}
+
+/* kanban of tabs */
+.kanban {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 22px;
+  margin-top: 34px;
+  align-items: start;
+}
+
+.kanban--dropped {
+  grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+  margin-top: 14px;
+}
+
+.kanban__col {
+  display: grid;
+  gap: 16px;
+  align-content: start;
+  min-width: 0;
+}
+
+.kanban__title {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: var(--cork-ink);
+  font-weight: 820;
+  font-stretch: 72%;
+  font-size: 1.25rem;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+}
+
+.kanban__n {
+  display: inline-grid;
+  place-items: center;
+  min-width: 24px;
+  height: 22px;
+  padding: 0 6px;
+  border-radius: 11px;
+  background: rgb(46 29 13 / 0.18);
+  font-size: 0.78rem;
+  font-stretch: 100%;
+  letter-spacing: 0;
+}
+
+.kanban__empty {
+  padding: 18px 12px;
+  border: 1.5px dashed rgb(46 29 13 / 0.35);
+  border-radius: var(--radius);
+  color: var(--cork-ink-2);
+  font-size: 1.02rem;
+  text-align: center;
+}
+
+/* a torn-off tab: perforated top edge, the visitor's own marks in blue */
+.tabcard {
+  position: relative;
+  padding: 16px 14px 12px;
+  background: var(--paper);
+  border-radius: 0 0 var(--radius) var(--radius);
+  box-shadow: var(--shadow-paper);
+  -webkit-mask: radial-gradient(circle 3.2px at 7px 0, transparent 98%, #000) top left / 14px 100% repeat-x;
+  mask: radial-gradient(circle 3.2px at 7px 0, transparent 98%, #000) top left / 14px 100% repeat-x;
+}
+
+.tabcard--won {
+  background: var(--paper-green);
+}
+
+.tabcard--lost,
+.tabcard--withdrawn {
+  background: #f1eee8;
+}
+
+.tabcard__src {
+  overflow: hidden;
+  color: var(--ink-3);
+  font-size: 0.72rem;
+  font-weight: 740;
+  letter-spacing: 0.07em;
+  text-overflow: ellipsis;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+.tabcard__src span {
+  font-weight: 540;
+  letter-spacing: 0.02em;
+  text-transform: none;
+}
+
+.tabcard__title {
+  margin-top: 5px;
+  font-weight: 800;
+  font-stretch: 74%;
+  font-size: 1.12rem;
+  line-height: 1.1;
+}
+
+.tabcard__title a {
+  text-decoration: none;
+}
+
+.tabcard__title a:hover {
+  text-decoration: underline;
+}
+
+.tabcard__when {
+  margin-top: 5px;
+  color: var(--ink-2);
+  font-size: 0.84rem;
+}
+
+.tabcard__ended {
+  color: var(--pen);
+  font-weight: 600;
+}
+
+.tabcard__next {
+  margin-top: 6px;
+  font-size: 0.84rem;
+  font-weight: 650;
+}
+
+.tabcard__next span {
+  color: var(--ink-3);
+  font-weight: 520;
+}
+
+.tabcard__next.is-urgent,
+.tabcard__next.is-urgent span {
+  color: var(--stamp);
+}
+
+.tabcard__row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  margin-top: 10px;
+}
+
+.tabcard__status {
+  color: var(--pen);
+  font-weight: 650;
+  border-color: var(--pen-line);
+}
+
+.tabcard__check {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  min-height: 30px;
+  padding: 0 4px;
+  border: 0;
+  background: transparent;
+  color: var(--ink-2);
+  font-size: 0.8rem;
+  font-weight: 620;
+}
+
+.tabcard__check:hover {
+  color: var(--pen);
+}
+
+.tabcard__notes {
+  margin-top: 8px;
+  font-size: 1.02rem;
+  line-height: 1.35;
+  overflow-wrap: anywhere;
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  line-clamp: 3;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.tabcard__more {
+  display: grid;
+  gap: 10px;
+  margin-top: 10px;
+  padding-top: 10px;
+  border-top: 1px dashed var(--ink-line-2);
+}
+
+.tabcard__checklist {
+  display: grid;
+  gap: 2px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  font-size: 0.85rem;
+}
+
+.tabcard__checklist label {
+  display: flex;
+  align-items: flex-start;
+  gap: 7px;
+  padding: 3px 0;
+  cursor: pointer;
+}
+
+.tabcard__checklist input {
+  margin-top: 2px;
+}
+
+.tabcard__checklist input:checked + span {
+  color: var(--ink-3);
+  text-decoration: line-through;
+  text-decoration-color: var(--pen);
+}
+
+.tabcard__field {
+  display: grid;
+  gap: 4px;
+  color: var(--ink-3);
+  font-size: 0.7rem;
+  font-weight: 740;
+  letter-spacing: 0.07em;
+  text-transform: uppercase;
+}
+
+.tabcard__field .field {
+  min-height: 34px;
+  font-size: 0.88rem;
+  text-transform: none;
+  letter-spacing: 0;
+  color: var(--ink);
+}
+
+.tabcard__field .hand-field {
+  color: var(--pen);
+  font-size: 1.02rem;
+}
+
+.tabcard__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.tabcard__remove {
+  margin-left: auto;
+  color: var(--stamp);
+}
+
+.tabcard__remove:hover {
+  background: var(--stamp-wash) !important;
+}
+
+.tabcard__meta {
+  color: var(--ink-3);
+  font-size: 0.74rem;
+}
+
+.dropped {
+  margin-top: 30px;
+}
+
+.dropped__toggle {
+  color: var(--cork-ink);
+}
+
+.dropped__toggle:hover {
+  background: rgb(46 29 13 / 0.1) !important;
+}
+
+/* a friend's shared list */
+.shared {
+  position: relative;
+  margin-top: 24px;
+  padding: 22px 22px 16px;
+}
+
+.shared__pin {
+  top: -6px;
+  left: 30px;
+}
+
+.shared__title {
+  font-weight: 800;
+  font-stretch: 72%;
+  font-size: 1.35rem;
+}
+
+.shared__list {
+  margin: 10px 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.shared__list li {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px 10px;
+  padding: 8px 0;
+  border-bottom: 1px solid var(--rule);
+}
+
+.shared__list li a {
+  font-weight: 680;
+}
+
+.shared__list .btn {
+  margin-left: auto;
+}
+
+.shared__have {
+  margin-left: auto;
+}
+
+.shared__foot {
+  display: flex;
+  gap: 8px;
+  margin-top: 12px;
+}
+
+@media (max-width: 1100px) {
+  .kanban {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 860px) {
+  .tracker__overview {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+@media (max-width: 600px) {
+  .kanban {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .diary__list li {
+    grid-template-columns: 1fr auto;
+  }
+
+  .diary__date {
+    grid-column: 1 / -1;
+    display: flex;
+    gap: 8px;
+    align-items: baseline;
+  }
+}
+
+.kanban__col > *,
+.tabcard {
+  min-width: 0;
+}
+
+/* busy dates */
+.busy {
+  margin-top: 26px;
+  padding: 18px 20px;
+}
+
+.busy__head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 4px 16px;
+}
+
+.busy__title {
+  font-weight: 820;
+  font-stretch: 72%;
+  font-size: 1.2rem;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+}
+
+.busy__lede {
+  color: var(--ink-2);
+  font-size: 0.88rem;
+}
+
+.busy__list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 12px;
+  margin: 12px 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.busy__list li {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 2px 2px 2px 10px;
+  border: 1.5px dashed var(--pen-line);
+  border-radius: var(--radius);
+  background: rgb(231 237 255 / 0.5);
+}
+
+.busy__label {
+  font-size: 1.05rem;
+}
+
+.busy__dates {
+  color: var(--ink-2);
+  font-size: 0.85rem;
+  font-weight: 600;
+}
+
+.busy__form {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  gap: 10px;
+  margin-top: 14px;
+}
+
+.busy__form label {
+  display: grid;
+  gap: 4px;
+  color: var(--ink-3);
+  font-size: 0.7rem;
+  font-weight: 740;
+  letter-spacing: 0.07em;
+  text-transform: uppercase;
+}
+
+.busy__form .field {
+  min-height: 34px;
+  font-size: 0.9rem;
+  letter-spacing: 0;
+  text-transform: none;
+  color: var(--ink);
+}
+
+.busy__form label:first-child .field {
+  width: 200px;
+}
+
+.tabcard--shortlisted {
+  background: var(--paper-yellow);
+}

@@ -1,0 +1,8 @@
+{
+  "name": "hackmash-worker",
+  "private": true,
+  "description": "Pins the wrangler version pywrangler drives for the Hackmash Worker.",
+  "devDependencies": {
+    "wrangler": "^4.157.0"
+  }
+}

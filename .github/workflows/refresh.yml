@@ -1,0 +1,83 @@
+name: Refresh listings and deploy
+
+# Every four hours: scrape every platform (Python, real CPython so every adapter
+# works exactly as tested), rebuild the web app with the fresh catalog baked in
+# as a static file, and deploy the whole thing to Cloudflare Workers.
+#
+# Needs repository secrets CLOUDFLARE_API_TOKEN and CLOUDFLARE_ACCOUNT_ID, and the
+# repository variable HACKMASH_URL (the deployed site, used to carry state over).
+
+on:
+  schedule:
+    - cron: "17 */4 * * *"
+  workflow_dispatch: {}
+  push:
+    branches: [main]
+    paths-ignore: ["**.md", "docs/**"]
+
+concurrency:
+  group: deploy
+  cancel-in-progress: false
+
+jobs:
+  refresh-and-deploy:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: astral-sh/setup-uv@v6
+        with:
+          enable-cache: true
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+
+      - name: Restore previous state from the live site
+        # first-seen dates and last good listings survive between runs this way
+        run: |
+          mkdir -p backend/data
+          if [ -n "${HACKMASH_URL}" ]; then
+            curl -fsSL "${HACKMASH_URL%/}/data/state.json.gz" -o backend/data/state.json.gz \
+              || echo "No previous state; starting fresh."
+          fi
+        env:
+          HACKMASH_URL: ${{ vars.HACKMASH_URL }}
+
+      - name: Fetch every platform
+        working-directory: backend
+        # one failing platform keeps its previous listings; it must not block the deploy
+        run: uv run hackmash refresh || echo "Some sources failed; see the log above."
+
+      - name: Refuse to publish a broken catalog
+        working-directory: backend
+        run: |
+          uv run python - <<'PY'
+          import json, sys
+          doc = json.load(open("data/catalog.json"))
+          ok = [s["key"] for s in doc["sources"] if s["ok"]]
+          print(f"{doc['count']} listings from {len(ok)} healthy sources: {', '.join(ok)}")
+          sys.exit(0 if doc["count"] >= 100 and len(ok) >= 3 else 1)
+          PY
+
+      - name: Build the web app
+        working-directory: frontend
+        run: npm ci && npm run build
+
+      - name: Publish data alongside the site
+        run: |
+          mkdir -p frontend/dist/data
+          cp backend/data/catalog.json backend/data/state.json.gz frontend/dist/data/
+
+      - name: Bundle the API worker
+        run: ./worker/build.sh
+
+      - name: Deploy to Cloudflare Workers
+        working-directory: worker
+        run: uv run pywrangler deploy
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}

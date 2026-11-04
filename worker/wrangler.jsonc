@@ -1,0 +1,17 @@
+{
+  // Hackmash on Cloudflare Workers.
+  // Static assets (the React app + /data/catalog.json written by the refresher)
+  // are served straight from Cloudflare's edge; only /api/* wakes the Python Worker.
+  "$schema": "./node_modules/wrangler/config-schema.json",
+  "name": "hackmash",
+  "main": "src/entry.py",
+  "compatibility_date": "2026-10-01",
+  "compatibility_flags": ["python_workers"],
+  "assets": {
+    "directory": "../frontend/dist",
+    "binding": "ASSETS",
+    "not_found_handling": "single-page-application",
+    "run_worker_first": ["/api/*"]
+  },
+  "observability": { "enabled": true }
+}

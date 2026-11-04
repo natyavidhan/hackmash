@@ -1,0 +1,107 @@
+/* Sources page ------------------------------------------------------------ */
+
+.sources__group {
+  margin-top: 30px;
+}
+
+.sources__heading {
+  margin-bottom: 12px;
+  color: var(--cork-ink);
+  font-weight: 820;
+  font-stretch: 72%;
+  font-size: 1.35rem;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+}
+
+.sources__table .num {
+  text-align: right;
+  white-space: nowrap;
+}
+
+.sources__table td.num a {
+  font-weight: 760;
+}
+
+.sources__name {
+  min-width: 170px;
+}
+
+.sources__name a {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  font-weight: 760;
+  text-decoration: none;
+}
+
+.sources__name a:hover {
+  text-decoration: underline;
+}
+
+.sources__desc {
+  max-width: 52ch;
+  color: var(--ink-2);
+}
+
+.sources__health {
+  white-space: nowrap;
+}
+
+.health {
+  display: inline-block;
+  width: 9px;
+  height: 9px;
+  margin-right: 7px;
+  border-radius: 50%;
+  vertical-align: 1px;
+}
+
+.health--ok {
+  background: var(--pin-green);
+}
+
+.health--stale {
+  background: var(--pin-brass);
+}
+
+.health--down {
+  background: var(--pin-red);
+}
+
+.sources__notes {
+  max-width: 820px;
+  margin-top: 36px;
+  padding: 22px 26px;
+  transform: rotate(-0.3deg);
+}
+
+.sources__notes h2 {
+  font-weight: 820;
+  font-stretch: 72%;
+  font-size: 1.3rem;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+}
+
+.sources__notes ul {
+  margin: 10px 0 0;
+  padding-left: 18px;
+  color: var(--ink-2);
+}
+
+.sources__notes li {
+  margin-top: 6px;
+  max-width: 72ch;
+}
+
+.sources__notes a {
+  color: var(--pen);
+  font-weight: 620;
+}
+
+@media (max-width: 860px) {
+  .sources__desc {
+    display: none !important;
+  }
+}
