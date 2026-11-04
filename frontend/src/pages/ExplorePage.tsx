@@ -196,7 +196,7 @@ export function ExplorePage() {
         </label>
         <div className="searchbar__tools">
           <button type="button" className="btn filters-toggle" onClick={() => setSheetOpen(true)}>
-            <SlidersHorizontal size={16} aria-hidden="true" /> Filters{active > 0 && <span className="filters-toggle__n">{active}</span>}
+            <SlidersHorizontal size={16} aria-hidden="true" /> <span className="filters-toggle__label">Filters</span>{active > 0 && <span className="filters-toggle__n">{active}</span>}
           </button>
           <label className="sortpick">
             <span className="visually-hidden">Sort by</span>

@@ -1,0 +1,165 @@
+/* Phones and touch screens. Loaded last so these refine the desktop rules
+   instead of fighting them. Hover rules are already limited to real pointers
+   at build time (vite.config.ts). */
+
+/* touch: fingers, not cursors ---------------------------------------------- */
+
+@media (pointer: coarse) {
+  /* iOS Safari zooms the whole page into any field under 16px on focus */
+  input:not([type="checkbox"], [type="radio"], [type="range"]),
+  select,
+  textarea {
+    font-size: max(16px, 1em);
+  }
+
+  /* the "/" shortcut hint means nothing without a keyboard */
+  .searchstrip__kbd {
+    display: none;
+  }
+
+  /* the notebook's ruled lines open up to a comfortable tap height */
+  .notebook,
+  .filter-sheet__paper {
+    background-image:
+      linear-gradient(90deg, transparent 30px, var(--margin) 30px, var(--margin) 31px, transparent 31px),
+      repeating-linear-gradient(180deg, transparent 0 39px, var(--rule) 39px 40px);
+  }
+
+  .nb-section summary {
+    min-height: 48px;
+  }
+
+  .nb-row,
+  .nb-more,
+  .nb-sub,
+  .nb-none {
+    min-height: 40px;
+  }
+
+  .nb-none {
+    line-height: 40px;
+  }
+
+  .nb-row {
+    font-size: 0.96rem;
+  }
+
+  .nb-row input {
+    width: 18px;
+    height: 18px;
+  }
+
+  .nb-search {
+    height: 36px;
+    margin: 2px 0;
+  }
+
+  .nb-seg button {
+    min-height: 38px;
+  }
+
+  .nb-dates .field {
+    min-height: 40px;
+  }
+
+  .chip {
+    min-height: 34px;
+  }
+}
+
+/* no hover to reveal it, so the hide control is always there: keep the
+   organizer line clear of it */
+@media (hover: none) {
+  .notice__head {
+    padding-right: 30px;
+  }
+
+  .notice__hide {
+    top: 2px;
+    right: 2px;
+    width: 34px;
+    height: 34px;
+  }
+
+  .notice:has(.notice__new) .notice__hide {
+    top: 26px;
+  }
+}
+
+/* phones -------------------------------------------------------------------- */
+
+@media (max-width: 560px) {
+  /* register: one entry per block, actions on their own row under the facts */
+  .register__table tr {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .register__when,
+  .register__where,
+  .register__prize {
+    grid-column: 1 / -1;
+  }
+
+  .register__table .register__where {
+    min-width: 0;
+    max-width: none;
+  }
+
+  .register__table .register__prize {
+    width: auto;
+    min-width: 0;
+    display: -webkit-box;
+    overflow: hidden;
+    -webkit-line-clamp: 2;
+    line-clamp: 2;
+    -webkit-box-orient: vertical;
+  }
+
+  .register__actions {
+    grid-column: 1 / -1;
+    grid-row: auto;
+    width: auto;
+    margin-top: 8px;
+    padding-top: 8px !important;
+    border-top: 1px dashed var(--ink-line-2) !important;
+  }
+
+  /* the notice taken down fills the phone; a thin cork edge keeps the world */
+  .sheet__paper {
+    padding: 14px 8px 32px;
+  }
+
+  .sheet__close {
+    margin: -4px 2px 0 0;
+  }
+
+  .sheet__notice {
+    padding: 26px 18px 22px;
+  }
+}
+
+@media (max-width: 389px) {
+  /* Filters, sort and the view toggle share one row: the sort keeps its label */
+  .filters-toggle {
+    padding: 0 10px;
+    gap: 6px;
+  }
+
+  .filters-toggle__label {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip-path: inset(50%);
+    white-space: nowrap;
+  }
+
+  .viewpick button {
+    padding: 0 7px;
+  }
+
+  .sortpick .field {
+    padding-right: 26px;
+    background-position: right 9px center;
+  }
+}

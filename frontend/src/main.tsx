@@ -7,6 +7,7 @@ import "./styles/notice.css";
 import "./styles/sheet.css";
 import "./styles/tracker.css";
 import "./styles/pages.css";
+import "./styles/mobile.css";
 
 import { StrictMode } from "react";
 import { createRoot } from "react-dom/client";
