@@ -1,4 +1,4 @@
-<p align="center"><img src="assets/icon.svg" width="72" height="72" alt=""></p>
+<p align="center"><a href="https://hackmash.xyz"><img src="assets/banner.png" alt="Hackmash: every hackathon, one board. Screenshots of the board on desktop and phone."></a></p>
 
 <h1 align="center">Hackmash</h1>
 
