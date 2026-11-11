@@ -42,6 +42,10 @@ Strategy: restrained. A cork field, with paper carrying the content and two inks
 - **Slips**: kraft quick-filter tags with a pin, slightly askew. When on, they turn ballpoint wash with a blue pin.
 - **Register** (list view): a ruled ledger with a 2 px ink header rule.
 - **Planner** (calendar view): a wall planner with paper slips per start and red "N closing" marks.
+- **Map** (map view, `MapView`, `map.css`): a printed political map of India pinned to the cork by two brass pins, in the official Survey of India outline. Neighbours are a light ink wash, the sea is paper with three engraved water lines along every coast, state borders are dashed and the national border solid. A condensed caps cartouche ("INDIA", counts) heads it, with the pin-colour key on a row under it. Push pins mark places, never venues: a place is a city with the towns within 50 km ("Delhi NCR"), the same at every zoom and width. One pin for a quiet place, two from 3 events, three from 10, coloured by the most pressing state there (red, then blue, green, brass). Places too close to tell apart at the current zoom share a pin ("19 Mumbai region +2"). The busiest pins get small paper name tags with a count, every pin once zoomed in; the rest show a bare count. The picked place is circled in ballpoint and its tag turns ballpoint wash. Zoom is +/− paper buttons, then drag to move. Printed names (seas, states, neighbours) only appear where there is room and never under a pin or tag, so phones get the bare map.
+  - Beside it, a **place slip** (a bottom sheet of at most 55% of the screen under 1020 px, with the page scrolled so the place stays in view above it): the place in condensed headline type, its state and count, any other place sharing its pin, "Show all N on the board", then a ruled list of its notices with the deadline stamp and time left. Closing returns focus to whatever opened it. Before a place is picked the slip is **Where they are**, a ruled ledger of places by count with red "N close this week" marks; on phones it sits under the map.
+  - Kraft slips under the map count what a map can't show: online and abroad (they open on the board or in the list), and in-person events that don't say where (they open in the slip). Credits for the map data sit in a line under the map.
+- **State picker** (`StateMap`, in the notebook's Where section): India by state on a paper inset, states with hackathons in paper, the rest in a light ink wash, the picked ones in ballpoint wash with a ballpoint border. Counts sit on states big enough to hold them; the checklist under it is the same control for keyboards and screen readers.
 - **Sheet** (`DetailSheet`): the notice taken down. A pinned paper card centred over the dimmed board in a `<dialog>` (at most 560 px wide, at least 16 px clear of every edge and always inside the safe area), its body scrolling inside the card while the pin and close button stay put, with a stapled banner photo and a dashed ballpoint "your tab" box for tracking.
 - **Tabs in the tracker** (`.tabcard`): perforated top edge (mask). Won is green stock, shortlisted yellow, finished grey.
 - **Report card**: a ruled marksheet table, not a hero-metric block.
@@ -65,7 +69,8 @@ Strategy: restrained. A cork field, with paper carrying the content and two inks
 
 - Max width 1480 px, with gutter `clamp(14px, 2.4vw, 28px)`.
 - Explore: a 272 px sticky notebook plus an auto-fill grid of notices (min 272 px).
-- Under 1020 px the notebook becomes a full-height filter sheet. Under 720 px the view toggle goes icon-only and the search placeholder shortens.
+- Map view: the map sheet plus a 300–360 px column for the city slip. Under 1020 px the slip becomes a bottom sheet and the places ledger moves under the map.
+- Under 1020 px the notebook becomes a full-height filter sheet. Under 720 px the view toggle goes icon-only and the search placeholder shortens. Under 560 px the Filters button keeps only its icon and count, so the sort menu and four layouts fit beside it. The Map view has no sort menu.
 
 ## Browser surfaces
 

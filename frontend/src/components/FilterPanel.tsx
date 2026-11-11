@@ -2,6 +2,7 @@ import { useMemo, useState, type ReactNode } from "react";
 import { fmtMoney } from "../lib/format";
 import { STATUS_OPTIONS, type Facets, type Filters, type ListKey } from "../lib/filters";
 import type { SourceInfo, Taxonomy } from "../lib/types";
+import { StateMap } from "./StateMap";
 
 interface Props {
   filters: Filters;
@@ -99,7 +100,7 @@ function Radios({ name, value, options, onChange }: { name: string; value: strin
   return (
     <div className="nb-list" role="radiogroup" aria-label={name}>
       {options.map((o) => (
-        <label key={o.value || "any"} className="nb-row">
+        <label key={`r-${o.value}`} className="nb-row">
           <input type="radio" name={name} checked={value === o.value} onChange={() => onChange(o.value)} />
           <span className="nb-label">{o.label}</span>
         </label>
@@ -119,6 +120,8 @@ export function FilterPanel({ filters, setFilters, facets, taxonomy, sources, cu
     if (order === "label") return list.sort((a, b) => a.label.localeCompare(b.label));
     return list.sort((a, b) => b.count - a.count || a.label.localeCompare(b.label));
   };
+
+  const hasAny = (key: ListKey) => [...facets[key].values()].some((n) => n > 0);
 
   const rate = fx?.[currency];
   const money = (usd: number) =>
@@ -154,10 +157,28 @@ export function FilterPanel({ filters, setFilters, facets, taxonomy, sources, cu
         <CheckList name="mode" options={opts("mode", taxonomy.modes, ["online", "in_person", "hybrid"])} selected={filters.mode} onChange={(mode) => setFilters({ mode })} />
       </Section>
 
-      <Section title="Where" active={filters.region.length + filters.country.length}>
+      <Section title="Where" active={filters.region.length + filters.country.length + filters.state.length + filters.city.length}>
         <CheckList name="region" options={opts("region", (v) => v)} selected={filters.region} onChange={(region) => setFilters({ region })} limit={6} />
         <p className="nb-sub">Country</p>
         <CheckList name="country" options={opts("country", (v) => v)} selected={filters.country} onChange={(country) => setFilters({ country })} limit={6} searchable />
+        {(hasAny("state") || filters.state.length > 0) && (
+          <>
+            <p className="nb-sub">State in India</p>
+            <StateMap
+              counts={facets.state}
+              selected={filters.state}
+              onToggle={(s) => setFilters({ state: filters.state.includes(s) ? filters.state.filter((x) => x !== s) : [...filters.state, s] })}
+            />
+            <p className="nb-hint">Tap a state, or tick it below. Numbers are hackathons there.</p>
+            <CheckList name="state" options={opts("state", (v) => v)} selected={filters.state} onChange={(state) => setFilters({ state })} limit={6} searchable />
+          </>
+        )}
+        {(hasAny("city") || filters.city.length > 0) && (
+          <>
+            <p className="nb-sub">City</p>
+            <CheckList name="city" options={opts("city", (v) => v)} selected={filters.city} onChange={(city) => setFilters({ city })} limit={6} searchable />
+          </>
+        )}
       </Section>
 
       <Section title="Platform" active={filters.source.length}>

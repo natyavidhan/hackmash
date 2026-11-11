@@ -24,8 +24,13 @@ export interface RawItem {
   mode?: Mode;
   location?: string;
   city?: string;
+  /** Indian state or union territory */
+  state?: string;
   country?: string;
   region?: string;
+  /** the city's coordinates: pins mark the city, not the venue */
+  lat?: number;
+  lng?: number;
   starts_at?: string;
   ends_at?: string;
   registration_opens_at?: string;

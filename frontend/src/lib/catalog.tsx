@@ -32,6 +32,7 @@ function derive(raw: RawItem, names: Record<string, string>, tax: Taxonomy): Hac
     raw.tagline,
     raw.location,
     raw.city,
+    raw.state,
     raw.country,
     raw.region,
     sourceName,

@@ -33,7 +33,7 @@ Hackathons are scattered over dozens of platforms. Indian college events live on
 **Filters that matter**
 - Status: happening now or not started yet.
 - Closing within 3, 7, 14 or 30 days. Start date range.
-- Online, in person or hybrid. Region and country.
+- Online, in person or hybrid. Region, country, and for India the state (tap it on a small map) and city.
 - Platform. 24 themes (AI & ML, Web3, FinTech, HealthTech, Climate, Social Good…).
 - Prize pool size. Format: hackathon, ideathon/pitch, coding contest, data science.
 - Who it's for: college students, high school, women & non-binary, professionals, startups.
@@ -42,8 +42,9 @@ Hackathons are scattered over dozens of platforms. Indian college events live on
 - Facet counts update live as you filter. Every filter lives in the URL, so a search is shareable.
 - Quick filter slips, pinned searches, and "hide this notice" to clear what you don't care about.
 
-**Board, list and calendar views**
+**Board, list, calendar and map views**
 - Board for browsing, a dense register for scanning, and a month planner showing what starts and which registrations close on each day.
+- A map of India with every in-person and hybrid hackathon pinned to its city, in the official Survey of India outline. Busy cities get more pins; pin colours match the board (red: closes within 3 days, green: happening now, blue: in your tabs). Pick a city to see its notices with their deadlines, zoom into a busy metro, or put that city's notices on the board. Online and overseas events are counted under the map instead.
 - Press <kbd>/</kbd> to search.
 
 **My tabs (the tracker)**
@@ -126,6 +127,7 @@ How each platform is read, and the ones that could not be added (login walls, Ja
 - **Backend (Python 3.12)**, in `backend/hackmash/`, runs on a home server:
   - `sources/`: one adapter per platform. Each uses that platform's public JSON API, embedded page data (`__NEXT_DATA__`, JSON-LD) or HTML.
   - `normalize.py`: canonical themes, audiences, countries and regions, plus currency conversion.
+  - `geo.py`: where an in-person event is, for the map and the state filter: a canonical city, its state and the city's coordinates (pins mark the city, never the venue). Looked up in a bundled list of Indian places (`hackmash/data/places_in.tsv.gz`, from GeoNames; `scripts/build_places.py` rebuilds it), never guessed: an event with no match gets no pin, and each sync logs those.
   - `dedupe.py`: fuzzy title + date matching across platforms.
   - `pipeline.py`: concurrent fetching with per-source timeouts. A failing source keeps its last good listings.
   - `catalog.py`: builds the catalog. `sync.py`: turns it into database rows and sends the ones that changed.
@@ -178,7 +180,7 @@ Free to use at `https://hackmash.xyz`, read-only, CORS open.
 | Endpoint | What it returns |
 |---|---|
 | `GET /api/catalog` | Every current hackathon (the feed the web app uses), with taxonomy, exchange rates and platform health. ETag-cached |
-| `GET /api/hackathons?q=&source=&mode=&theme=&country=&status=&min_prize_usd=&beginner=&free=&sort=&page=` | Current listings, filtered, sorted and paginated. `status` is `open`, `live` or `upcoming` |
+| `GET /api/hackathons?q=&source=&mode=&theme=&country=&state=&city=&status=&min_prize_usd=&beginner=&free=&sort=&page=` | Current listings, filtered, sorted and paginated. `status` is `open`, `live` or `upcoming`; `state` is an Indian state or union territory |
 | `GET /api/hackathons?ids=a,b,c` | Listings by id, ended ones included (up to 300) |
 | `GET /api/hackathons/{id}` | One listing, ended or not, with `status`, `registration_open` and `next_deadline` |
 | `GET /api/hackathons/{id}/calendar.ics` | The event plus registration/submission deadlines, with reminders |
@@ -257,7 +259,7 @@ It runs at 00:17, 03:17, 06:17 … UTC, each time up to 10 minutes later at rand
 
 ```
 backend/              Python package `hackmash`: adapters, pipeline, sync, local API, CLI, tests
-frontend/             React + TypeScript + Vite web app
+frontend/             React + TypeScript + Vite web app (scripts/build-india-map.mjs bakes the map)
 worker/               Cloudflare Worker (TypeScript), D1 migrations, wrangler config
 deploy/home-server/   systemd timer and installer for the sync job
 docs/                 research on student pain points and the platform landscape
@@ -276,3 +278,5 @@ Hackmash reads only public pages and public APIs, a few times a day, with bounde
 ## Credits
 
 Thanks [Sushant](https://github.com/sushant-mishra-dtu/) for the idea.
+
+Map data: state boundaries from the [DataMeet India community](https://github.com/datameet/maps) (CC BY 4.0), neighbouring countries from [Natural Earth](https://www.naturalearthdata.com/) (public domain), places from [GeoNames](https://www.geonames.org/) (CC BY 4.0). `node frontend/scripts/build-india-map.mjs` rebuilds the map from them.

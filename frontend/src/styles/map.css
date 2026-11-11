@@ -1,0 +1,639 @@
+/* Map view: a printed map of India pinned to the cork, push pins per city,
+   and a slip beside it (a sheet on phones) with what's pinned there. */
+
+.mapview {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(300px, 360px);
+  gap: 22px;
+  align-items: start;
+  margin-top: 12px;
+}
+
+.mapview__main {
+  min-width: 0;
+}
+
+.mapview__side {
+  position: sticky;
+  top: calc(var(--header-h) + 16px);
+}
+
+/* the printed map ------------------------------------------------------------ */
+
+.mapsheet {
+  position: relative;
+  padding: 14px 16px 12px;
+}
+
+.mapsheet__pin {
+  top: -5px;
+}
+
+.mapsheet__pin--l {
+  left: 14px;
+}
+
+.mapsheet__pin--r {
+  right: 14px;
+}
+
+.mapsheet__head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 8px 16px;
+  margin-bottom: 8px;
+  padding-bottom: 7px;
+  border-bottom: 2px solid var(--ink);
+}
+
+.mapsheet__head h2 {
+  margin: 0;
+  font-weight: 830;
+  font-stretch: 68%;
+  font-size: 1.55rem;
+  line-height: 0.95;
+  letter-spacing: 0.01em;
+  text-transform: uppercase;
+}
+
+.mapsheet__head h2 small {
+  display: block;
+  margin-top: 4px;
+  font-size: 0.68rem;
+  font-weight: 640;
+  font-stretch: 100%;
+  letter-spacing: 0.08em;
+  color: var(--ink-3);
+}
+
+.mapkey {
+  display: flex;
+  flex-basis: 100%;
+  flex-wrap: wrap;
+  gap: 2px 14px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  color: var(--ink-2);
+  font-size: 0.74rem;
+}
+
+.mapkey li {
+  white-space: nowrap;
+}
+
+.mapkey .pin {
+  position: relative;
+  display: inline-block;
+  width: 11px;
+  height: 11px;
+  margin-right: 5px;
+  vertical-align: -1px;
+  box-shadow: 0 1px 1px rgb(20 10 0 / 0.3);
+}
+
+.map {
+  position: relative;
+  overflow: hidden;
+  touch-action: manipulation;
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+.map.is-zoomed {
+  cursor: grab;
+  touch-action: none; /* a drag moves the map, not the page */
+}
+
+.map.is-dragging {
+  cursor: grabbing;
+}
+
+.map__svg {
+  position: absolute;
+  inset: 0;
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+
+.map__nb {
+  fill: rgb(29 23 18 / 0.065);
+  stroke: rgb(29 23 18 / 0.32);
+  stroke-width: 0.6;
+  vector-effect: non-scaling-stroke;
+}
+
+.map__state {
+  fill: var(--paper);
+}
+
+/* state borders dashed, the national border solid, as on a printed political map */
+.map__inner {
+  fill: none;
+  stroke: rgb(29 23 18 / 0.42);
+  stroke-width: 0.7;
+  stroke-dasharray: 3 2;
+  vector-effect: non-scaling-stroke;
+}
+
+.map__outline {
+  fill: none;
+  stroke: var(--ink);
+  stroke-width: 1.25;
+  stroke-linejoin: round;
+  vector-effect: non-scaling-stroke;
+}
+
+.map__label {
+  fill: var(--ink-3);
+  font-weight: 620;
+  pointer-events: none;
+}
+
+.map__label--state {
+  opacity: 0.6;
+  font-stretch: 84%;
+}
+
+.map__label--sea {
+  font-weight: 560;
+  font-stretch: 110%;
+  opacity: 0.75;
+}
+
+.map__label--country {
+  opacity: 0.75;
+}
+
+/* the visitor's mark: the city they picked, circled in ballpoint */
+.map__loop {
+  fill: none;
+  stroke: var(--pen);
+  stroke-width: 2;
+  stroke-linecap: round;
+  opacity: 0.92;
+  vector-effect: non-scaling-stroke;
+}
+
+/* pins ---------------------------------------------------------------------- */
+
+.map__pins {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+
+.mpin {
+  position: absolute;
+  width: 30px;
+  height: 30px;
+  margin: -15px 0 0 -15px;
+  padding: 0;
+  border: 0;
+  border-radius: 50%;
+  background: none;
+  cursor: pointer;
+  pointer-events: auto;
+}
+
+.mpin .pin {
+  left: 50%;
+  top: 50%;
+  width: 13px;
+  height: 13px;
+  margin: -6.5px 0 0 -6.5px;
+}
+
+.mpin:focus-visible {
+  outline: 2px solid var(--pen);
+  outline-offset: 0;
+}
+
+.mpin__n {
+  position: absolute;
+  left: 23px;
+  top: -2px;
+  color: var(--ink);
+  font-weight: 800;
+  font-size: 0.7rem;
+  pointer-events: none;
+  text-shadow:
+    0 0 2px var(--paper),
+    0 0 2px var(--paper),
+    0 0 3px var(--paper);
+}
+
+.mtag {
+  position: absolute;
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  height: 18px;
+  padding: 0 5px;
+  border: 1px solid var(--ink-line-2);
+  border-radius: 2px;
+  background: var(--paper);
+  box-shadow: 0 1px 2px rgb(52 28 6 / 0.18);
+  color: var(--ink-2);
+  font-weight: 700;
+  font-stretch: 76%;
+  font-size: 0.74rem;
+  line-height: 1;
+  white-space: nowrap;
+  cursor: pointer;
+  pointer-events: auto;
+}
+
+.mtag b {
+  color: var(--ink);
+  font-weight: 850;
+  font-stretch: 80%;
+}
+
+.mtag--sm {
+  height: 16px;
+  padding: 0 4px;
+  font-size: 0.68rem;
+}
+
+.mtag.is-on {
+  border-color: var(--pen);
+  background: var(--pen-wash);
+  color: var(--pen);
+}
+
+.mtag.is-on b {
+  color: var(--pen);
+}
+
+.map__ctl {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  display: grid;
+  gap: 4px;
+}
+
+.map__ctl button {
+  display: grid;
+  place-items: center;
+  width: 32px;
+  height: 32px;
+  padding: 0;
+  border: 1px solid var(--ink-line-2);
+  border-radius: 2px;
+  background: var(--paper);
+  box-shadow: 0 1px 2px rgb(52 28 6 / 0.15);
+  color: var(--ink);
+}
+
+.map__ctl button:hover:not(:disabled) {
+  background: #fff;
+}
+
+.map__ctl button:disabled {
+  opacity: 0.4;
+  cursor: default;
+}
+
+.map__empty {
+  position: absolute;
+  top: 40%;
+  left: 50%;
+  max-width: 80%;
+  margin: 0;
+  padding: 10px 14px;
+  border: 1px dashed var(--ink-line-2);
+  background: var(--paper);
+  color: var(--ink-2);
+  font-size: 0.9rem;
+  text-align: center;
+  transform: translate(-50%, -50%);
+}
+
+.mapcredit {
+  margin: 8px 0 0;
+  padding-top: 7px;
+  border-top: 1px solid var(--ink-line);
+  color: var(--ink-3);
+  font-size: 0.7rem;
+  line-height: 1.4;
+}
+
+/* what the map can't show, on kraft slips under it */
+.offmap {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-top: 16px;
+}
+
+.offmap .slip {
+  gap: 6px;
+}
+
+/* the slip beside the map ----------------------------------------------------- */
+
+.cityslip {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  max-height: calc(100dvh - var(--header-h) - 40px);
+  padding: 16px 16px 12px;
+  border-radius: var(--radius);
+  background: var(--paper);
+  box-shadow: var(--shadow-paper);
+}
+
+.cityslip__pin {
+  top: -6px;
+  left: 50%;
+  margin-left: -7px;
+}
+
+.cityslip__head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.cityslip h2 {
+  margin: 0;
+  font-weight: 840;
+  font-stretch: 68%;
+  font-size: 2rem;
+  line-height: 0.95;
+  letter-spacing: -0.005em;
+}
+
+.cityslip h2:focus {
+  outline: none;
+}
+
+.cityslip h2:focus-visible {
+  outline: 2px solid var(--pen);
+}
+
+.cityslip__head .icon-btn {
+  margin: -6px -8px 0 0;
+}
+
+.cityslip__sub {
+  margin: 5px 0 10px;
+  color: var(--ink-3);
+  font-size: 0.8rem;
+  line-height: 1.4;
+}
+
+.cityslip__sub b {
+  color: var(--ink-2);
+  font-weight: 650;
+}
+
+.cityslip__also {
+  margin: -4px 0 10px;
+  color: var(--ink-3);
+  font-size: 0.78rem;
+}
+
+.cityslip__also button {
+  padding: 0;
+  border: 0;
+  background: none;
+  color: var(--pen);
+  font-weight: 650;
+  text-decoration: underline;
+  text-decoration-color: var(--pen-line);
+  text-underline-offset: 0.18em;
+}
+
+.cityslip__all {
+  align-self: flex-start;
+  margin-bottom: 12px;
+}
+
+.cityslip__list {
+  flex: 1 1 auto;
+  min-height: 0;
+  margin: 0 -16px;
+  padding: 0 16px;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  list-style: none;
+}
+
+.crow {
+  display: grid;
+  grid-template-columns: 132px minmax(0, 1fr);
+  gap: 4px 12px;
+  padding: 9px 0;
+  border-top: 1px solid var(--ink-line);
+}
+
+.crow:first-child {
+  border-top: 2px solid var(--ink);
+}
+
+.crow__date {
+  display: grid;
+  align-content: start;
+  justify-items: start;
+  gap: 4px;
+}
+
+.crow__date .stamp {
+  max-width: 100%;
+  padding: 3px 6px 2px;
+  font-size: 0.74rem;
+  white-space: normal;
+}
+
+.crow__date .time-left {
+  font-size: 0.76rem;
+}
+
+.crow__body {
+  min-width: 0;
+}
+
+.crow__title {
+  color: var(--ink);
+  font-weight: 660;
+  font-size: 0.88rem;
+  line-height: 1.22;
+  text-decoration: none;
+}
+
+.crow__title:hover {
+  text-decoration: underline;
+  text-decoration-color: var(--pen);
+}
+
+.crow__sub {
+  display: block;
+  margin-top: 2px;
+  overflow: hidden;
+  color: var(--ink-3);
+  font-size: 0.74rem;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.crow__sub b {
+  color: var(--ink-2);
+  font-weight: 650;
+}
+
+/* where they are: the places as a ledger */
+.cityindex__list {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.cityindex__list li {
+  border-top: 1px solid var(--ink-line);
+}
+
+.cityindex__list li:first-child {
+  border-top: 2px solid var(--ink);
+}
+
+.cityindex__list button {
+  display: grid;
+  grid-template-columns: 38px minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  padding: 8px 0;
+  border: 0;
+  background: none;
+  color: var(--ink);
+  text-align: left;
+}
+
+.cityindex__list button:hover .cityindex__place {
+  text-decoration: underline;
+  text-decoration-color: var(--pen);
+}
+
+.cityindex__n {
+  font-weight: 850;
+  font-stretch: 72%;
+  font-size: 1.35rem;
+  line-height: 1;
+  text-align: right;
+}
+
+.cityindex__place {
+  min-width: 0;
+  font-weight: 650;
+  font-size: 0.92rem;
+  line-height: 1.2;
+}
+
+.cityindex__place small {
+  display: block;
+  overflow: hidden;
+  color: var(--ink-3);
+  font-weight: 450;
+  font-size: 0.74rem;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.cityindex__soon {
+  color: var(--stamp);
+  font-weight: 650;
+  font-size: 0.72rem;
+  white-space: nowrap;
+}
+
+.cityindex--below {
+  max-height: none;
+  margin-top: 26px;
+}
+
+.cityindex__all {
+  margin-top: 4px;
+}
+
+/* phones and narrow windows: the slip becomes a sheet from the bottom edge */
+@media (max-width: 1020px) {
+  .mapview {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .cityslip--sheet {
+    position: fixed;
+    right: 0;
+    bottom: 0;
+    left: 0;
+    z-index: 30;
+    max-width: 640px;
+    max-height: min(55dvh, 520px);
+    margin: 0 auto;
+    padding: 16px 16px calc(10px + env(safe-area-inset-bottom));
+    border-radius: 12px 12px 0 0;
+    box-shadow: 0 -10px 30px -8px rgb(30 16 4 / 0.55);
+    animation: slip-up 0.26s var(--ease-out);
+  }
+
+  .cityslip--sheet h2 {
+    font-size: 1.75rem;
+  }
+}
+
+@media (max-width: 560px) {
+  .mapsheet {
+    padding: 10px 10px 10px;
+  }
+
+  .mapsheet__pin--l {
+    left: 10px;
+  }
+
+  .mapsheet__pin--r {
+    right: 10px;
+  }
+
+  .mapsheet__head h2 {
+    font-size: 1.3rem;
+  }
+
+  .mapkey {
+    font-size: 0.7rem;
+  }
+
+  .mpin .pin {
+    width: 12px;
+    height: 12px;
+    margin: -6px 0 0 -6px;
+  }
+
+  .offmap__wide {
+    display: none;
+  }
+
+  .crow {
+    grid-template-columns: 120px minmax(0, 1fr);
+    gap: 4px 10px;
+  }
+}
+
+@keyframes slip-up {
+  from {
+    opacity: 0;
+    transform: translateY(24px);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .cityslip--sheet {
+    animation: none;
+  }
+}

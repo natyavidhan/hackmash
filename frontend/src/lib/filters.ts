@@ -2,7 +2,7 @@ import { DAY, lifecycle, nextDeadline } from "./lifecycle";
 import type { Hackathon } from "./types";
 
 export type SortKey = "deadline" | "starts" | "prize" | "newest" | "popular" | "relevance";
-export type ViewKey = "board" | "list" | "calendar";
+export type ViewKey = "board" | "list" | "calendar" | "map";
 
 export interface Filters {
   q: string;
@@ -12,6 +12,8 @@ export interface Filters {
   theme: string[];
   region: string[];
   country: string[];
+  state: string[];
+  city: string[];
   kind: string[];
   audience: string[];
   prize: string; // "" | "any" | min USD
@@ -30,7 +32,7 @@ export interface Filters {
   hidden: boolean;
 }
 
-export const LIST_KEYS = ["status", "mode", "source", "theme", "region", "country", "kind", "audience"] as const;
+export const LIST_KEYS = ["status", "mode", "source", "theme", "region", "country", "state", "city", "kind", "audience"] as const;
 export type ListKey = (typeof LIST_KEYS)[number];
 const BOOL_KEYS = ["beginner", "free", "fresh", "travel", "hiring", "busy", "hidden"] as const;
 type BoolKey = (typeof BOOL_KEYS)[number];
@@ -69,6 +71,8 @@ export const DEFAULT_FILTERS: Filters = {
   theme: [],
   region: [],
   country: [],
+  state: [],
+  city: [],
   kind: [],
   audience: [],
   prize: "",
@@ -97,7 +101,7 @@ export function parseFilters(sp: URLSearchParams): Filters {
   const sort = sp.get("sort") as SortKey | null;
   f.sort = sort && SORTS.some((s) => s.key === sort) ? sort : f.q ? "relevance" : "deadline";
   const view = sp.get("view") as ViewKey | null;
-  f.view = view === "list" || view === "calendar" ? view : "board";
+  f.view = view === "list" || view === "calendar" || view === "map" ? view : "board";
   return f;
 }
 
@@ -184,6 +188,8 @@ const PREDICATES: Record<Dim, (h: Hackathon, f: Filters, c: FilterContext) => bo
   theme: (h, f) => !f.theme.length || (h.themes ?? []).some((t) => f.theme.includes(t)),
   region: (h, f) => !f.region.length || (!!h.region && f.region.includes(h.region)),
   country: (h, f) => !f.country.length || (!!h.country && f.country.includes(h.country)),
+  state: (h, f) => !f.state.length || (!!h.state && f.state.includes(h.state)),
+  city: (h, f) => !f.city.length || (!!h.city && f.city.includes(h.city)),
   kind: (h, f) => !f.kind.length || f.kind.includes(h.kind ?? "hackathon"),
   audience: (h, f) => !f.audience.length || (h.audience ?? []).some((a) => f.audience.includes(a)),
   prize: (h, f) => {
@@ -248,7 +254,7 @@ export function facetCounts(items: Hackathon[], f: Filters, c: FilterContext): F
                 ? (h.audience ?? [])
                 : key === "kind"
                   ? [h.kind ?? "hackathon"]
-                  : [h[key as "mode" | "region" | "country"]].filter(Boolean);
+                  : [h[key as "mode" | "region" | "country" | "state" | "city"]].filter(Boolean);
       for (const v of new Set(values)) counts.set(v as string, (counts.get(v as string) ?? 0) + 1);
     }
     out[key] = counts;

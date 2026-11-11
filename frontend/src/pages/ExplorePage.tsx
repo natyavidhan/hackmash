@@ -1,5 +1,5 @@
-import { Calendar, LayoutGrid, List, Pin, Search, SlidersHorizontal, X } from "lucide-react";
-import { useCallback, useDeferredValue, useEffect, useMemo, useRef, useState } from "react";
+import { Calendar, LayoutGrid, List, Map as MapIcon, Pin, Search, SlidersHorizontal, X } from "lucide-react";
+import { lazy, Suspense, useCallback, useDeferredValue, useEffect, useMemo, useRef, useState } from "react";
 import { Link, useSearchParams } from "react-router-dom";
 import { CalendarView } from "../components/CalendarView";
 import { FilterPanel } from "../components/FilterPanel";
@@ -27,6 +27,9 @@ import { useMediaQuery } from "../lib/media";
 import { busyRanges, currencyPref, previousVisit, tracker, useStore } from "../lib/tracker";
 
 const PAGE = 48;
+
+// the map, its outlines and its styles load only when someone opens it
+const MapView = lazy(() => import("../components/MapView"));
 
 function busyClash(h: { start?: number; end?: number }, busy: { from: number; to: number; label: string }[]): string | undefined {
   if (!busy.length || h.start === undefined) return undefined;
@@ -142,7 +145,7 @@ export function ExplorePage() {
 
   // removable chips for every active filter value
   const chips: { key: string; label: string; remove: () => void }[] = [];
-  const listChip = (k: "status" | "mode" | "source" | "theme" | "region" | "country" | "kind" | "audience", label: (v: string) => string) =>
+  const listChip = (k: "status" | "mode" | "source" | "theme" | "region" | "country" | "state" | "city" | "kind" | "audience", label: (v: string) => string) =>
     filters[k].forEach((v) => chips.push({ key: `${k}:${v}`, label: label(v), remove: () => setFilters({ [k]: filters[k].filter((x) => x !== v) }) }));
   listChip("status", (v) => STATUS_OPTIONS.find((s) => s.key === v)?.label ?? v);
   listChip("mode", (v) => taxonomy.modes[v] ?? v);
@@ -150,6 +153,8 @@ export function ExplorePage() {
   listChip("theme", (v) => taxonomy.themes[v] ?? v);
   listChip("region", (v) => v);
   listChip("country", (v) => v);
+  listChip("state", (v) => v);
+  listChip("city", (v) => v);
   listChip("kind", (v) => taxonomy.kinds[v] ?? v);
   listChip("audience", (v) => taxonomy.audiences[v] ?? v);
   if (filters.closing) chips.push({ key: "closing", label: `Closing within ${filters.closing} days`, remove: () => setFilters({ closing: "" }) });
@@ -226,32 +231,36 @@ export function ExplorePage() {
           )}
         </label>
         <div className="searchbar__tools">
-          <button type="button" className="btn filters-toggle" onClick={() => setSheetOpen(true)}>
+          <button type="button" className="btn filters-toggle" onClick={() => setSheetOpen(true)} aria-label={active > 0 ? `Filters, ${active} on` : "Filters"}>
             <SlidersHorizontal size={16} aria-hidden="true" /> <span className="filters-toggle__label">Filters</span>{active > 0 && <span className="filters-toggle__n">{active}</span>}
           </button>
-          <label className="sortpick">
-            <span className="visually-hidden">Sort by</span>
-            <select
-              className="field"
-              value={view.sort}
-              onChange={(e) => {
-                pushedQ.current = q; // the query as typed goes along with the new order
-                setFilters({ q, sort: e.target.value as Filters["sort"] });
-              }}
-            >
-              {SORTS.filter((s) => s.key !== "relevance" || view.q).map((s) => (
-                <option key={s.key} value={s.key}>
-                  {s.label}
-                </option>
-              ))}
-            </select>
-          </label>
+          {/* a map has no order to pick */}
+          {filters.view !== "map" && (
+            <label className="sortpick">
+              <span className="visually-hidden">Sort by</span>
+              <select
+                className="field"
+                value={view.sort}
+                onChange={(e) => {
+                  pushedQ.current = q; // the query as typed goes along with the new order
+                  setFilters({ q, sort: e.target.value as Filters["sort"] });
+                }}
+              >
+                {SORTS.filter((s) => s.key !== "relevance" || view.q).map((s) => (
+                  <option key={s.key} value={s.key}>
+                    {s.label}
+                  </option>
+                ))}
+              </select>
+            </label>
+          )}
           <div className="viewpick" role="radiogroup" aria-label="Layout">
             {(
               [
                 ["board", LayoutGrid, "Board"],
                 ["list", List, "List"],
                 ["calendar", Calendar, "Calendar"],
+                ["map", MapIcon, "Map"],
               ] as const
             ).map(([key, Icon, label]) => (
               <button key={key} type="button" role="radio" aria-checked={filters.view === key} className={filters.view === key ? "is-on" : ""} onClick={() => setView(key)} title={label}>
@@ -400,7 +409,28 @@ export function ExplorePage() {
 
           {state === "ready" && filters.view === "calendar" && results.length > 0 && <CalendarView items={results} now={now} />}
 
-          {state === "ready" && filters.view !== "calendar" && results.length > (filters.view === "list" ? limit * 2 : limit) && (
+          {state === "ready" && filters.view === "map" && results.length > 0 && (
+            <Suspense
+              fallback={
+                <div className="board-note paper">
+                  <p>Unrolling the map…</p>
+                </div>
+              }
+            >
+              <MapView
+                items={results}
+                now={now}
+                tracked={store.items}
+                currency={currency}
+                fx={fx}
+                onShowCities={(city) => setFilters({ city, view: "board" })}
+                onShowOnline={() => setFilters({ mode: ["online"], view: "board" })}
+                onShowAbroad={(country) => setFilters({ country, view: "list" })}
+              />
+            </Suspense>
+          )}
+
+          {state === "ready" && (filters.view === "board" || filters.view === "list") && results.length > (filters.view === "list" ? limit * 2 : limit) && (
             <div className="more">
               <button type="button" className="btn btn--ink" onClick={() => setLimit((l) => l + PAGE * (filters.view === "list" ? 2 : 1))}>
                 Show more ({plural(results.length - (filters.view === "list" ? limit * 2 : limit), "notice")} left)

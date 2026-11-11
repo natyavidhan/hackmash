@@ -128,10 +128,9 @@
   .sheet__notice {
     padding: 26px 18px 22px;
   }
-}
 
-@media (max-width: 389px) {
-  /* Filters, sort and the view toggle share one row: the sort keeps its label */
+  /* Filters, sort and four layouts share one row: the sort keeps its label,
+     Filters keeps its icon and count (and its name, for screen readers) */
   .filters-toggle {
     padding: 0 10px;
     gap: 6px;
@@ -145,7 +144,9 @@
     clip-path: inset(50%);
     white-space: nowrap;
   }
+}
 
+@media (max-width: 389px) {
   .viewpick button {
     padding: 0 7px;
   }
