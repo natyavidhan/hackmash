@@ -1,4 +1,4 @@
-# Installed by deploy/home-server/install.sh (which fills in @REPO@ and @UV@).
+# Installed by deploy/home-server/install.sh, which fills in the paths below.
 [Unit]
 Description=Hackmash: fetch every hackathon platform and update the site's database
 Documentation=https://github.com/natyavidhan/hackmash#keeping-it-fresh-the-home-server
