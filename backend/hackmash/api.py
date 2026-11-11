@@ -1,6 +1,8 @@
-"""HTTP API (FastAPI) + static hosting for the built React app.
+"""HTTP API (FastAPI) + static hosting for the built React app, for running Hackmash
+locally or on your own server. In production the same routes are served by the
+Cloudflare Worker in ``worker/src`` from D1, which ``hackmash sync`` fills.
 
-    GET  /data/catalog.json                full snapshot the web app filters locally (ETag-cached)
+    GET  /api/catalog                      the catalog the web app filters locally (ETag-cached)
     GET  /api/hackathons                   server-side search/filter/sort (public API)
     GET  /api/hackathons/{id}              one listing (also resolves ids of merged duplicates)
     GET  /api/hackathons/{id}/calendar.ics calendar file: event + deadline reminders
@@ -9,13 +11,9 @@
     GET  /api/health                       liveness + data freshness
     POST /api/admin/refresh                re-fetch now (local server only; needs HACKMASH_ADMIN_TOKEN)
 
-The routes are shared by two deployments, which differ only in where the
-catalog comes from (see ``CatalogSource``):
-
-* local / container: ``hackmash.server:app`` reads the store the refresher
-  writes, and runs the refresh loop in-process;
-* Cloudflare Workers: ``worker/src/entry.py`` builds the app with a source
-  that reads the catalog from the Worker's static assets.
+``hackmash.server:app`` reads the store the refresher writes and runs the
+refresh loop in-process. The catalog comes through a ``CatalogSource``, so other
+storage can be plugged in.
 """
 
 from __future__ import annotations

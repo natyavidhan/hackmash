@@ -1,8 +1,17 @@
 {
   "name": "hackmash-worker",
   "private": true,
-  "description": "Pins the wrangler version pywrangler drives for the Hackmash Worker.",
+  "description": "Hackmash's Cloudflare Worker: serves the web app and the API from D1.",
   "devDependencies": {
-    "wrangler": "^4.157.0"
+    "@cloudflare/workers-types": "^5.20261110.1",
+    "typescript": "^7.0.2",
+    "wrangler": "^4.160.0"
+  },
+  "scripts": {
+    "dev": "wrangler dev",
+    "typecheck": "tsc -p .",
+    "db:migrate": "wrangler d1 migrations apply hackmash --remote",
+    "db:migrate:local": "wrangler d1 migrations apply hackmash --local",
+    "deploy": "npm --prefix ../frontend run build && wrangler d1 migrations apply hackmash --remote && wrangler deploy"
   }
 }

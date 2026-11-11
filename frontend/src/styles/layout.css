@@ -126,6 +126,12 @@
   box-shadow: 0 0 0 3px rgb(212 255 58 / 0.18);
 }
 
+/* the data is older than a sync or two should allow */
+.frame__dot--stale {
+  background: var(--pin-red);
+  box-shadow: 0 0 0 3px rgb(224 38 47 / 0.2);
+}
+
 @media (max-width: 720px) {
   .frame__meta {
     display: none;

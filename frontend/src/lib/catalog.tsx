@@ -1,5 +1,20 @@
-import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState, type ReactNode } from "react";
+import {
+  createContext,
+  useCallback,
+  useContext,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+  useSyncExternalStore,
+  type ReactNode,
+} from "react";
 import type { Catalog, Hackathon, RawItem, SourceInfo, Taxonomy } from "./types";
+
+/** Every current hackathon's card. In production the Worker builds it from the database. */
+const FEED_URL = "/api/catalog";
+const STALE_AFTER = 20 * 60_000; // re-check when the tab comes back after this long
+const REFRESH_EVERY = 30 * 60_000; // and this often while it stays open
 
 const ts = (v?: string) => {
   if (!v) return undefined;
@@ -61,26 +76,29 @@ const EMPTY_TAX: Taxonomy = { themes: {}, kinds: {}, audiences: {}, modes: {}, r
 
 const CatalogContext = createContext<CatalogContextValue | null>(null);
 
-const STALE_AFTER = 20 * 60_000;
-
 export function CatalogProvider({ children }: { children: ReactNode }) {
   const [catalog, setCatalog] = useState<Catalog>();
   const [state, setState] = useState<LoadState>("loading");
   const [error, setError] = useState<string>();
   const loadedAt = useRef(0);
+  const version = useRef<string | undefined>(undefined);
 
   const load = useCallback(async (background = false) => {
     if (!background) setState((s) => (s === "ready" ? s : "loading"));
     try {
-      // a static file in production (CDN-cached, no server work per visit); FastAPI serves it in development
-      const res = await fetch("/data/catalog.json", { headers: { Accept: "application/json" } });
+      // revalidate every time: an unchanged board costs one tiny 304
+      const res = await fetch(FEED_URL, { headers: { Accept: "application/json" }, cache: "no-cache" });
       if (res.status === 503) throw new Error("The board is being put up for the first time. Give it a minute and retry.");
       if (!res.ok) throw new Error(`The server answered ${res.status}.`);
       const data = (await res.json()) as Catalog;
-      setCatalog(data);
+      loadedAt.current = Date.now();
+      const v = data.data_version ?? data.generated_at;
+      if (v !== version.current) {
+        version.current = v;
+        setCatalog(data);
+      }
       setState("ready");
       setError(undefined);
-      loadedAt.current = Date.now();
     } catch (e) {
       if (!background) {
         setError(e instanceof Error ? e.message : String(e));
@@ -94,8 +112,14 @@ export function CatalogProvider({ children }: { children: ReactNode }) {
     const onVisible = () => {
       if (document.visibilityState === "visible" && Date.now() - loadedAt.current > STALE_AFTER) void load(true);
     };
+    const timer = window.setInterval(() => {
+      if (document.visibilityState === "visible") void load(true);
+    }, REFRESH_EVERY);
     document.addEventListener("visibilitychange", onVisible);
-    return () => document.removeEventListener("visibilitychange", onVisible);
+    return () => {
+      document.removeEventListener("visibilitychange", onVisible);
+      window.clearInterval(timer);
+    };
   }, [load]);
 
   const value = useMemo<CatalogContextValue>(() => {
@@ -139,4 +163,87 @@ export function useNow(intervalMs = 60_000): number {
     return () => window.clearInterval(id);
   }, [intervalMs]);
   return now;
+}
+
+// -- listings fetched one by one ------------------------------------------------------
+// The feed carries what the board shows. Closed and ended events (opened from a
+// link or from My tabs) and the long text of any notice are fetched on demand.
+
+const remote = new Map<string, RawItem | null>(); // id (or merged id) -> full listing; null = gone
+const pending = new Set<string>();
+const listeners = new Set<() => void>();
+let remoteVersion = 0;
+
+const subscribe = (cb: () => void) => {
+  listeners.add(cb);
+  return () => listeners.delete(cb);
+};
+const snapshot = () => remoteVersion;
+
+async function fetchListings(ids: string[]): Promise<void> {
+  const want = [...new Set(ids)].filter((id) => !remote.has(id) && !pending.has(id));
+  if (!want.length) return;
+  for (const id of want) pending.add(id);
+  try {
+    if (want.length === 1) {
+      const res = await fetch(`/api/hackathons/${encodeURIComponent(want[0])}`, { headers: { Accept: "application/json" } });
+      if (res.status === 404) remote.set(want[0], null);
+      else if (res.ok) remote.set(want[0], (await res.json()) as RawItem);
+    } else {
+      for (let i = 0; i < want.length; i += 100) {
+        const batch = want.slice(i, i + 100);
+        const res = await fetch(`/api/hackathons?ids=${encodeURIComponent(batch.join(","))}`, { headers: { Accept: "application/json" } });
+        if (!res.ok) continue;
+        const found = ((await res.json()) as { items: RawItem[] }).items;
+        for (const id of batch) {
+          remote.set(id, found.find((r) => r.id === id || (r.also_on ?? []).some((l) => l.id === id)) ?? null);
+        }
+      }
+    }
+  } catch {
+    // offline: leave them unknown so a later visit retries
+  } finally {
+    for (const id of want) pending.delete(id);
+    remoteVersion++;
+    for (const l of listeners) l();
+  }
+}
+
+/**
+ * Listings by id for ids that are not on the board: fetched from the API.
+ * The map holds an id once its answer is in (null: it has come down).
+ */
+export function useOffBoard(ids: string[]): Map<string, Hackathon | null> {
+  const { byId, sources, taxonomy, state } = useCatalog();
+  const version = useSyncExternalStore(subscribe, snapshot);
+  const key = ids.filter((id) => !byId.has(id)).join(",");
+  useEffect(() => {
+    if (state === "ready" && key) void fetchListings(key.split(","));
+  }, [key, state]);
+  return useMemo(() => {
+    const out = new Map<string, Hackathon | null>();
+    if (!key) return out;
+    const names = Object.fromEntries(Object.values(sources).map((s) => [s.key, s.name]));
+    for (const id of key.split(",")) {
+      if (!remote.has(id)) continue;
+      const raw = remote.get(id);
+      out.set(id, raw ? derive(raw, names, taxonomy) : null);
+    }
+    return out;
+  }, [key, version, sources, taxonomy]); // `version` bumps when answers arrive
+}
+
+/** The listing with its long text (description, eligibility, images), fetched if the feed left it out. */
+export function useFullListing(h?: Hackathon): Hackathon | undefined {
+  const version = useSyncExternalStore(subscribe, snapshot);
+  const id = h?.id;
+  const needed = !!h && h.description === undefined && !remote.has(h.id);
+  useEffect(() => {
+    if (needed && id) void fetchListings([id]);
+  }, [needed, id]);
+  return useMemo(() => {
+    const full = h ? remote.get(h.id) : undefined;
+    if (!h || !full) return h;
+    return { ...h, description: full.description, eligibility: full.eligibility, image_url: full.image_url, logo_url: full.logo_url };
+  }, [h, version]); // `version` bumps when answers arrive
 }

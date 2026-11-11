@@ -15,12 +15,13 @@ in one format, with filters that help you choose. Apply on the original platform
 
 ## Why
 
-Hackathons are scattered over dozens of platforms. Indian college events live on Unstop and Devfolio, corporate ones on HackerEarth and Hack2skill, global ones on Devpost and MLH, Web3 on DoraHacks and ETHGlobal, AI on lablab.ai, ML on Kaggle. No platform lists its competitors' events, so students juggle tabs, WhatsApp forwards and spreadsheets, and still miss registration deadlines. Hackmash reads all of them every few hours, puts every event into one format and pins it to one board.
+Hackathons are scattered over dozens of platforms. Indian college events live on Unstop and Devfolio, corporate ones on HackerEarth and Hack2skill, global ones on Devpost and MLH, Web3 on DoraHacks and ETHGlobal, AI on lablab.ai, ML on Kaggle. No platform lists its competitors' events, so students juggle tabs, WhatsApp forwards and spreadsheets, and still miss registration deadlines. Hackmash reads all of them every three hours, puts every event into one format and pins it to one board.
 
 ## What it does
 
 **One board, every platform**
-- 26 sources (listed below), refreshed every four hours.
+- 26 sources (listed below), refreshed every three hours.
+- The board shows what you can still sign up for. Searching also finds events under way whose registration has closed, marked as such; anything else (ended, or closed and not started) opens from its link.
 - The same event listed on several platforms (for example MLH + Devpost) is merged into one notice with "Also on" links.
 - Every notice links straight to the page where you register. Hackmash never sits between you and the apply button.
 
@@ -30,7 +31,7 @@ Hackathons are scattered over dozens of platforms. Indian college events live on
 - The same fields for every platform: mode, place, team size, who can join, entry fee, registrations so far. Unknown values are shown as unknown, never guessed.
 
 **Filters that matter**
-- Status: open for registration, happening now, not started yet, ended recently.
+- Status: happening now or not started yet.
 - Closing within 3, 7, 14 or 30 days. Start date range.
 - Online, in person or hybrid. Region and country.
 - Platform. 24 themes (AI & ML, Web3, FinTech, HealthTech, Climate, Social Good…).
@@ -65,7 +66,7 @@ Hackathons are scattered over dozens of platforms. Indian college events live on
 - Every notice shows where it came from and when it was last checked. The [Sources](#platforms) page shows each platform's health.
 
 **Public API**
-- `GET /api/hackathons` with the same filters. Interactive docs at `/api/docs`.
+- `GET /api/hackathons` with the same filters, and every listing by id. See [API](#api).
 
 <p align="center">
 <img src="docs/screenshots/notice.png" width="49%" alt="A notice opened up close: stamps, facts, warnings and your own tracking notes">
@@ -108,25 +109,28 @@ How each platform is read, and the ones that could not be added (login walls, Ja
 ## How it works
 
 ```
- 26 platform adapters          pipeline                          serving
-┌──────────────────┐   ┌──────────────────────────────┐   ┌──────────────────────────────┐
-│ devpost.py       │   │ merge into state             │   │ /data/catalog.json  (static) │
-│ unstop.py        │──▶│ normalise: themes, audience, │──▶│ React app filters it locally │
-│ devfolio.py  …   │   │   country, currency → USD    │   │ /api/* FastAPI: search, ICS, │
-│ (Python, httpx)  │   │ dedupe across platforms      │   │   sources, health            │
-└──────────────────┘   │ publish catalog snapshot     │   └──────────────────────────────┘
-                       └──────────────────────────────┘
+ home server, every 3 hours                       Cloudflare
+┌──────────────────────────────┐   HTTPS   ┌─────────────────────────────────────────┐
+│ hackmash sync (Python)       │  bearer   │ Worker (TypeScript)                     │
+│  26 platform adapters        │   key     │  /api/ingest/*  writes ──▶ D1 (SQLite)  │
+│  normalise, dedupe, catalog  │ ────────▶ │  /api/*         reads  ◀── D1           │
+│  send only the changed rows  │           │  static assets: the React app           │
+└──────────────────────────────┘           └─────────────────────────────────────────┘
+                                                        ▲ /api/catalog (cached, ETag)
+                                                     browsers
 ```
 
-- **Backend (Python 3.12, FastAPI)**, in `backend/hackmash/`:
+- **Backend (Python 3.12)**, in `backend/hackmash/`, runs on a home server:
   - `sources/`: one adapter per platform. Each uses that platform's public JSON API, embedded page data (`__NEXT_DATA__`, JSON-LD) or HTML.
   - `normalize.py`: canonical themes, audiences, countries and regions, plus currency conversion.
   - `dedupe.py`: fuzzy title + date matching across platforms.
   - `pipeline.py`: concurrent fetching with per-source timeouts. A failing source keeps its last good listings.
-  - `catalog.py`: builds the published snapshot.
-  - `api.py`: the HTTP routes.
-- **State** is one JSON document (`state.json.gz`) holding listings with first/last-seen times and per-source run logs. It can live in a local folder or travel between CI runs.
-- **Frontend (React 19, TypeScript, Vite)**, in `frontend/`. It downloads the catalog once (about 150 KB gzipped) and filters in the browser, so filtering is instant and hosting costs almost nothing. The tracker is `localStorage` only.
+  - `catalog.py`: builds the catalog. `sync.py`: turns it into database rows and sends the ones that changed.
+  - `api.py`: the same API as FastAPI, for running everything locally without Cloudflare.
+- **State** is one JSON document (`state.json.gz`) holding listings with first/last-seen times, deadline changes and per-source run logs. It stays on the home server.
+- **Database: Cloudflare D1.** One row per hackathon: a compact `card` (what the board needs), the full `detail`, a content hash and `listed_until`. Schema: `worker/migrations/`.
+- **Worker (TypeScript)**, in `worker/src/`. It joins the cards of every current hackathon into the feed the web app downloads (about 70 KB compressed), builds it once per sync and keeps it in memory, in Cloudflare's cache and in browsers (ETag, so a returning visitor gets a 304). Detail views, closed and ended listings, calendars and search are served from D1 on demand. Writes come only through `/api/ingest/*` with a secret key.
+- **Frontend (React 19, TypeScript, Vite)**, in `frontend/`. It filters the feed in the browser, so filtering is instant, re-checks it every 30 minutes while open, and fetches a notice's long text when you open it. The tracker is `localStorage` only.
 
 ## Run it locally
 
@@ -139,7 +143,7 @@ uv sync
 uv run hackmash refresh          # ~1–2 minutes; prints a line per platform
 uv run hackmash serve            # http://127.0.0.1:8000  (re-fetches every 4 h by itself)
 
-# 2. frontend, in another terminal (hot reload on :5173, proxies /api and /data to :8000)
+# 2. frontend, in another terminal (hot reload on :5173, proxies /api to :8000)
 cd frontend
 npm install
 npm run dev
@@ -156,22 +160,29 @@ Settings (environment variables): `HACKMASH_REFRESH_HOURS` (default 4), `HACKMAS
 uv run hackmash sources            # list adapters
 uv run hackmash fetch unstop       # run one adapter: item count, field coverage, problems, samples
 uv run hackmash fetch unstop --json
-uv run hackmash refresh devpost mlh   # fetch some (or all) sources and publish the catalog
-uv run hackmash rebuild            # re-publish the catalog from saved state, no fetching
+uv run hackmash refresh devpost mlh   # fetch some (or all) sources and write the catalog
+uv run hackmash rebuild            # rewrite the catalog from saved state, no fetching
+uv run hackmash push --dry-run     # what would change in the site's database
+uv run hackmash sync               # refresh + push: what the home server runs
 uv run pytest                      # tests
 ```
 
 ### API
 
+Free to use at `https://hackmash.xyz`, read-only, CORS open.
+
 | Endpoint | What it returns |
 |---|---|
-| `GET /data/catalog.json` | The whole snapshot the web app uses (ETag-cached) |
-| `GET /api/hackathons?q=&source=&mode=&theme=&country=&status=&min_prize_usd=&beginner=&free=&sort=&page=` | Filtered, sorted, paginated listings |
-| `GET /api/hackathons/{id}` | One listing, with status, `registration_open` and `next_deadline` |
+| `GET /api/catalog` | Every current hackathon (the feed the web app uses), with taxonomy, exchange rates and platform health. ETag-cached |
+| `GET /api/hackathons?q=&source=&mode=&theme=&country=&status=&min_prize_usd=&beginner=&free=&sort=&page=` | Current listings, filtered, sorted and paginated. `status` is `open`, `live` or `upcoming` |
+| `GET /api/hackathons?ids=a,b,c` | Listings by id, ended ones included (up to 300) |
+| `GET /api/hackathons/{id}` | One listing, ended or not, with `status`, `registration_open` and `next_deadline` |
 | `GET /api/hackathons/{id}/calendar.ics` | The event plus registration/submission deadlines, with reminders |
 | `GET /api/calendar.ics?ids=a,b,c` | A subscribable calendar for a list of hackathons |
 | `GET /api/sources` | Platforms and their fetch health |
-| `GET /api/docs` | Interactive OpenAPI docs |
+| `GET /api/health` | Whether data is in, and how fresh it is |
+
+Ended events stay reachable by id for 90 days. Locally, `hackmash serve` offers the same routes plus interactive docs at `/api/docs`.
 
 ## Adding a platform
 
@@ -193,37 +204,43 @@ class MyPlatform(Source):
 
 Run `uv run hackmash fetch myplatform` until it reports "no problems found", and spot-check a few items against the live site. `sources/devpost.py` is a complete reference adapter. `sources/base.py` has helpers for retries, bounded concurrency, dates, money and text.
 
-## Deploying to Cloudflare Workers
+## Deploying
 
-Everything runs on Cloudflare's edge:
+### The site: Cloudflare Workers and D1
 
-- **Static assets.** The React app and `/data/catalog.json` are served directly by Workers static assets, with no server work per visit.
-- **Python Worker.** `worker/src/entry.py` runs the same FastAPI routes on Python Workers for `/api/*`.
-- **Scraper.** A [scheduled GitHub Action](.github/workflows/refresh.yml) runs the Python scrapers every four hours, carries the state over from the live site, refuses to publish a broken catalog, rebuilds the app and deploys with `pywrangler`. The scraper makes a few hundred outbound requests and needs real CPython, which is why it runs in CI and not inside the Worker.
-
-One-time setup:
-
-1. Create a Cloudflare API token with the *Edit Cloudflare Workers* template.
-2. In the GitHub repo, add the secret `CLOUDFLARE_API_TOKEN` and the variable `CLOUDFLARE_ACCOUNT_ID`. The workflow stays off until that variable exists.
-3. Run the workflow once (Actions → *Refresh listings and deploy* → Run workflow).
-4. Set the repository variable `HACKMASH_URL` to the deployed URL, so later runs carry state over.
-
-Manual deploy from your machine:
+Needs a Cloudflare API token with *Workers Scripts: Edit* and *D1: Edit* (the *Edit Cloudflare Workers* template plus D1), in `CLOUDFLARE_API_TOKEN`.
 
 ```bash
-cd backend && uv run hackmash refresh && cd ../frontend && npm run build
-mkdir -p dist/data && cp ../backend/data/{catalog.json,state.json.gz} dist/data/
-cd ../worker && ./build.sh && npm install && uv run pywrangler deploy
+cd worker && npm install
+npx wrangler d1 create hackmash --location apac   # once; put the database_id into wrangler.jsonc
+openssl rand -hex 32 | npx wrangler secret put INGEST_KEY   # once; keep the value for the home server
+npm run deploy      # builds the web app, applies database migrations, deploys
 ```
+
+`npm run dev` runs the Worker locally with a local D1 (`npm run db:migrate:local` first, and an `INGEST_KEY` in `worker/.dev.vars`), so `HACKMASH_API=http://127.0.0.1:8787 uv run hackmash push` fills it.
+
+### Keeping it fresh: the home server
+
+Scraping needs real CPython and a few hundred outbound requests, so it runs on a machine you own. Every three hours a systemd timer runs `hackmash sync`: fetch every platform, rebuild the catalog, and send only the rows that changed. It refuses to publish a catalog that looks broken (fewer than 100 listings or 3 healthy platforms) or that would delete more than half the database in one go. The next run repairs a run that failed halfway, because each run compares against what the database actually holds.
+
+```bash
+git clone https://github.com/natyavidhan/hackmash ~/services/hackmash
+cp ~/services/hackmash/deploy/home-server/sync.env.example ~/.config/hackmash/sync.env
+#   ... set HACKMASH_INGEST_KEY to the Worker's INGEST_KEY, and HACKMASH_DATA_DIR
+~/services/hackmash/deploy/home-server/install.sh --now
+```
+
+Watch it with `journalctl --user -u hackmash-sync` and `systemctl --user list-timers`. Update it with `git -C ~/services/hackmash pull`. Stop it with `systemctl --user disable --now hackmash-sync.timer`.
 
 ## Project layout
 
 ```
-backend/    Python package `hackmash`: adapters, pipeline, API, CLI, tests
-frontend/   React + TypeScript + Vite web app
-worker/     Cloudflare Workers entry (Python) and wrangler config
-docs/       research on student pain points and the platform landscape
-.github/    scheduled refresh-and-deploy workflow
+backend/              Python package `hackmash`: adapters, pipeline, sync, local API, CLI, tests
+frontend/             React + TypeScript + Vite web app
+worker/               Cloudflare Worker (TypeScript), D1 migrations, wrangler config
+deploy/home-server/   systemd timer and installer for the sync job
+docs/                 research on student pain points and the platform landscape
+.github/              CI: tests and type checks
 ```
 
 ## Research behind the features

@@ -74,6 +74,7 @@ class LoadedCatalog:
                 self.by_id.setdefault(alt["id"], it)
             ns = SimpleNamespace(**{f: _dt(it.get(f)) for f in _DATE_FIELDS})
             ns.invite_only = it.get("invite_only")
+            ns.mode = it.get("mode")
             self._dates[it["id"]] = ns
             self._text[it["id"]] = " ".join(
                 str(x)

@@ -95,6 +95,8 @@ export interface Taxonomy {
 
 export interface Catalog {
   version: number;
+  /** Changes with every sync; the feed's ETag. */
+  data_version?: string;
   generated_at: string;
   count: number;
   taxonomy: Taxonomy;

@@ -2,17 +2,24 @@
 
     hackmash sources                 list registered source adapters
     hackmash fetch <key> [--json]    run one adapter and print a quality report
-    hackmash refresh [keys...]       fetch sources, update state, publish the catalog
-    hackmash rebuild                 re-publish the catalog from saved state (no fetching)
-    hackmash serve                   run the API server
+    hackmash refresh [keys...]       fetch sources, update state, write the catalog
+    hackmash rebuild                 rewrite the catalog from saved state (no fetching)
+    hackmash push [--dry-run]        send the catalog's changes to the site's database
+    hackmash sync [--dry-run]        refresh, then push: what the home server's timer runs
+    hackmash serve                   run the API server locally
+
+push and sync read HACKMASH_API (default https://hackmash.xyz) and
+HACKMASH_INGEST_KEY (the Worker's INGEST_KEY secret) from the environment.
 """
 
 from __future__ import annotations
 
 import argparse
 import asyncio
+import contextlib
 import json
 import logging
+import os
 import sys
 import time
 from collections import Counter
@@ -148,6 +155,72 @@ def _cmd_rebuild(_: argparse.Namespace) -> int:
     return 0
 
 
+@contextlib.contextmanager
+def _run_lock():
+    """One sync at a time (a manual run and the timer must not interleave)."""
+    import fcntl
+
+    from .state import FileStore
+
+    path = FileStore().dir / "sync.lock"
+    with open(path, "w") as fh:
+        try:
+            fcntl.flock(fh, fcntl.LOCK_EX | fcntl.LOCK_NB)
+        except BlockingIOError:
+            yield False
+            return
+        try:
+            yield True
+        finally:
+            fcntl.flock(fh, fcntl.LOCK_UN)
+
+
+def _push_catalog(args: argparse.Namespace) -> int:
+    from .state import FileStore
+    from .sync import DEFAULT_API, IngestClient, IngestError, catalog_problems, push, rows_from_catalog
+
+    data = asyncio.run(FileStore().load_catalog())
+    if data is None:
+        print("no catalog yet: run `hackmash refresh` first", file=sys.stderr)
+        return 1
+    doc = json.loads(data)
+    api = args.api or os.environ.get("HACKMASH_API") or DEFAULT_API
+    key = os.environ.get("HACKMASH_INGEST_KEY", "")
+    if not key:
+        if args.dry_run:
+            problems = catalog_problems(doc)
+            print(f"{len(rows_from_catalog(doc))} rows ready; set HACKMASH_INGEST_KEY to compare with {api}")
+            for p in problems:
+                print(f"!! {p}")
+            return 1 if problems else 0
+        print("HACKMASH_INGEST_KEY is not set (it must match the Worker's INGEST_KEY secret)", file=sys.stderr)
+        return 1
+    try:
+        report = push(doc, IngestClient(api, key), dry_run=args.dry_run, force=args.force)
+    except IngestError as exc:
+        print(f"push to {api} failed: {exc}", file=sys.stderr)
+        return 1
+    print(report.summary())
+    return 0
+
+
+def _cmd_push(args: argparse.Namespace) -> int:
+    return _push_catalog(args)
+
+
+def _cmd_sync(args: argparse.Namespace) -> int:
+    with _run_lock() as got:
+        if not got:
+            print("another sync is already running; leaving it to finish")
+            return 0
+        started = time.monotonic()
+        if _cmd_refresh(argparse.Namespace(keys=[])) != 0:
+            print("some platforms failed; they keep their previous listings")
+        code = _push_catalog(args)
+        print(f"sync finished in {time.monotonic() - started:.0f}s")
+        return code
+
+
 def _cmd_serve(args: argparse.Namespace) -> int:
     import uvicorn
 
@@ -157,6 +230,7 @@ def _cmd_serve(args: argparse.Namespace) -> int:
 
 def main(argv: list[str] | None = None) -> int:
     logging.basicConfig(level=logging.INFO, format="%(levelname)s %(name)s: %(message)s")
+    logging.getLogger("httpx").setLevel(logging.WARNING)  # one line per request drowns the summary
     parser = argparse.ArgumentParser(prog="hackmash")
     sub = parser.add_subparsers(dest="cmd", required=True)
 
@@ -173,6 +247,16 @@ def main(argv: list[str] | None = None) -> int:
     p.set_defaults(func=_cmd_refresh)
 
     sub.add_parser("rebuild", help="rebuild the catalog from saved state").set_defaults(func=_cmd_rebuild)
+
+    for name, func, text in (
+        ("push", _cmd_push, "send the catalog's changes to the site's database"),
+        ("sync", _cmd_sync, "fetch every platform, then push (what the home server runs)"),
+    ):
+        p = sub.add_parser(name, help=text)
+        p.add_argument("--dry-run", action="store_true", help="compare with the database but change nothing")
+        p.add_argument("--force", action="store_true", help="publish even if the catalog looks broken")
+        p.add_argument("--api", help="site to push to (default: $HACKMASH_API or https://hackmash.xyz)")
+        p.set_defaults(func=func)
 
     p = sub.add_parser("serve", help="run the API server")
     p.add_argument("--host", default="127.0.0.1")

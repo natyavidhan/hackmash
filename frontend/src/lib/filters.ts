@@ -6,7 +6,7 @@ export type ViewKey = "board" | "list" | "calendar";
 
 export interface Filters {
   q: string;
-  status: string[]; // open | live | soon | ended
+  status: string[]; // live | soon
   mode: string[];
   source: string[];
   theme: string[];
@@ -45,12 +45,21 @@ export const SORTS: { key: SortKey; label: string }[] = [
   { key: "relevance", label: "Best match" },
 ];
 
+// The board only pins up events you can still register for, so "open" is not a choice.
 export const STATUS_OPTIONS: { key: string; label: string }[] = [
-  { key: "open", label: "Open for registration" },
   { key: "live", label: "Happening now" },
   { key: "soon", label: "Not started yet" },
-  { key: "ended", label: "Ended recently" },
 ];
+
+/**
+ * Is it on the board? Only while registration is open. A search also finds
+ * events under way whose registration has closed; everything else (closed and
+ * not started, ended) is reachable only by its link.
+ */
+export function isListed(h: Hackathon, now: number, searching: boolean): boolean {
+  const { status, regOpen } = lifecycle(h, now);
+  return regOpen || (searching && status === "live");
+}
 
 export const DEFAULT_FILTERS: Filters = {
   q: "",
@@ -81,6 +90,8 @@ export const DEFAULT_FILTERS: Filters = {
 export function parseFilters(sp: URLSearchParams): Filters {
   const f: Filters = { ...DEFAULT_FILTERS };
   for (const k of LIST_KEYS) f[k] = sp.get(k)?.split(",").filter(Boolean) ?? [];
+  // old links and pinned searches may still say status=open or status=ended
+  f.status = f.status.filter((s) => STATUS_OPTIONS.some((o) => o.key === s));
   for (const k of TEXT_KEYS) f[k] = sp.get(k) ?? "";
   for (const k of BOOL_KEYS) f[k] = sp.get(k) === "1";
   const sort = sp.get("sort") as SortKey | null;
@@ -153,11 +164,9 @@ export function termMatcher(term: string): (text: string) => boolean {
 type Dim = ListKey | BoolKey | "q" | "prize" | "closing" | "dates" | "team";
 
 function statusBuckets(h: Hackathon, now: number): Set<string> {
-  const { status, regOpen } = lifecycle(h, now);
+  const { status } = lifecycle(h, now);
   const b = new Set<string>();
-  if (regOpen) b.add("open");
   if (status === "live") b.add("live");
-  if (status === "ended") b.add("ended");
   if (h.start !== undefined ? h.start > now : status === "open" || status === "upcoming") b.add("soon");
   return b;
 }
@@ -165,9 +174,10 @@ function statusBuckets(h: Hackathon, now: number): Set<string> {
 const PREDICATES: Record<Dim, (h: Hackathon, f: Filters, c: FilterContext) => boolean> = {
   q: (h, _f, c) => c.terms.every((t) => termMatcher(t)(h.search)),
   status: (h, f, c) => {
+    if (!isListed(h, c.now, c.terms.length > 0)) return false;
+    if (!f.status.length) return true;
     const b = statusBuckets(h, c.now);
-    if (!f.status.length) return !b.has("ended") && !(h.delisted && !b.has("live"));
-    return f.status.some((s) => b.has(s)) && (!h.delisted || f.status.some((s) => s !== "open"));
+    return f.status.some((s) => b.has(s));
   },
   mode: (h, f) => !f.mode.length || (!!h.mode && f.mode.includes(h.mode)),
   source: (h, f) => !f.source.length || h.allSources.some((s) => f.source.includes(s)),

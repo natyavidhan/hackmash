@@ -35,7 +35,7 @@ export function Header() {
         </nav>
         {generatedAt && (
           <p className="frame__meta">
-            <span className="frame__dot" aria-hidden="true" />
+            <span className={`frame__dot${now - generatedAt > 12 * 3_600_000 ? " frame__dot--stale" : ""}`} aria-hidden="true" />
             {platforms} platforms, updated {relativeAgo(generatedAt, now)}
           </p>
         )}

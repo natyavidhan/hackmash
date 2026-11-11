@@ -1,0 +1,13 @@
+[Unit]
+Description=Run the Hackmash sync every 3 hours
+
+[Timer]
+# 00:17, 03:17, 06:17 ... (plus up to 10 minutes, so platforms don't see a clockwork crawler)
+OnCalendar=*-*-* 00/3:17:00
+RandomizedDelaySec=10min
+AccuracySec=1min
+# a run missed while the machine was off happens as soon as it's back
+Persistent=true
+
+[Install]
+WantedBy=timers.target

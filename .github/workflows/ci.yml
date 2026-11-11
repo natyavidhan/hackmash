@@ -1,0 +1,41 @@
+name: CI
+
+# Tests and type checks. Nothing here needs secrets: scraping runs on the home
+# server (deploy/home-server) and deploys are `npm run deploy` in worker/.
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  backend:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: backend
+    steps:
+      - uses: actions/checkout@v7
+      - uses: astral-sh/setup-uv@v10
+        with:
+          enable-cache: true
+      - run: uv run --frozen ruff check .
+      - run: uv run --frozen pytest -q
+
+  web:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 24
+          cache: npm
+          cache-dependency-path: |
+            frontend/package-lock.json
+            worker/package-lock.json
+      - name: Web app (type check and build)
+        working-directory: frontend
+        run: npm ci && npm run build
+      - name: Worker (type check)
+        working-directory: worker
+        run: npm ci && npm run typecheck

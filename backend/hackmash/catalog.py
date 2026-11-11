@@ -1,9 +1,9 @@
-"""Build the public catalog snapshot from the refresher's state.
+"""Build the catalog snapshot from the refresher's state.
 
-The catalog is one JSON document the frontend downloads once and filters
-locally (fast UI, trivial hosting cost). It contains every live/upcoming
-listing, recently ended ones (so trackers keep working), taxonomy labels and
-per-source health.
+The catalog is one JSON document: every live and upcoming listing, ended ones
+for a while (so direct links and trackers keep working), taxonomy labels and
+per-source health. ``hackmash.sync`` turns it into database rows for the site;
+the local server (``hackmash serve``) serves it as-is.
 """
 
 from __future__ import annotations
@@ -13,15 +13,15 @@ from datetime import datetime, timedelta, timezone
 from typing import Any
 
 from .dedupe import dedupe
-from .models import Hackathon, closed_out
+from .models import Hackathon, closed_out, lifecycle
 from .normalize import AUDIENCES, KINDS, MODES, REGIONS, STATIC_USD_RATES, THEME_LABELS, normalize
 from .state import State, dumps
 
 CATALOG_VERSION = 1
-ENDED_KEEP = timedelta(days=30)  # keep ended events this long (tracker lookups, "recently ended")
+ENDED_KEEP = timedelta(days=90)  # ended events stay reachable by direct link this long
 DELISTED_KEEP = timedelta(days=45)  # keep listings a platform dropped this long
 DELIST_GRACE = timedelta(hours=36)  # missing from this many hours of successful runs = delisted
-DESCRIPTION_MAX = 900
+DESCRIPTION_MAX = 3000  # only the detail view loads it; the board never downloads descriptions
 EXTENSION_SHOWN = timedelta(days=21)  # show an "extended" badge this long after we notice it
 DISPLAY_CURRENCIES = ("USD", "INR", "EUR", "GBP", "CAD", "AUD", "SGD")
 
@@ -39,6 +39,14 @@ def _item_json(h: Hackathon) -> dict[str, Any]:
     if desc and len(desc) > DESCRIPTION_MAX:
         d["description"] = desc[:DESCRIPTION_MAX].rsplit(" ", 1)[0].rstrip(" ,.;:") + "…"
     return d
+
+
+def on_board(h: Hackathon, now: datetime) -> bool:
+    """Shown on the board: registration is open (mirrors the frontend's rule)."""
+    status, reg_open = lifecycle(h, now)
+    if h.delisted and not h.registration_deadline:
+        reg_open = False  # a platform that stopped listing an event usually closed registration
+    return status != "ended" and reg_open
 
 
 _JUNK_TITLE = re.compile(r"\b(test(ing)?|mock|dummy|sample|sandbox|do not join)\b", re.I)
@@ -96,8 +104,10 @@ def build_catalog(state: State, now: datetime | None = None) -> bytes:
     items = sorted(build_items(state, now, enabled), key=_sort_key)
     rates = {**STATIC_USD_RATES, **state.fx_rates, "USD": 1.0}
 
-    per_source: dict[str, int] = {}
+    per_source: dict[str, int] = {}  # what each platform contributes to the board right now
     for h in items:
+        if not on_board(h, now):
+            continue
         for src in [h.source, *(other.source for other in h.also_on)]:
             per_source[src] = per_source.get(src, 0) + 1
 

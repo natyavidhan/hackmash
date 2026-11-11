@@ -17,7 +17,7 @@ export function Footer() {
         </p>
         <div className="site-footer__links">
           <Link to="/sources">Where the data comes from</Link>
-          <a href="/api/docs">Public API</a>
+          <a href="https://github.com/natyavidhan/hackmash#api">Public API</a>
           <a href="https://github.com/natyavidhan/hackmash" target="_blank" rel="noopener noreferrer">
             Source code
           </a>

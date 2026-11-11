@@ -1,6 +1,7 @@
 import { ArrowUpRight, EyeOff, Users } from "lucide-react";
 import { memo } from "react";
 import { fmtDuration, fmtRange, placeLabel, prizeMagnitude, prizeParts, teamLabel } from "../lib/format";
+import { lifecycle } from "../lib/lifecycle";
 import { tracker, type Tracked } from "../lib/tracker";
 import type { Hackathon, Taxonomy } from "../lib/types";
 import { DeadlineStamp, OpenNoticeLink, STOCK, TimeLeft, TrackTabs, pinFor } from "./NoticeParts";
@@ -30,6 +31,8 @@ export const NoticeCard = memo(function NoticeCard({ h, now, currency, fx, taxon
   const titleId = `n-${h.id}`;
 
   const flags: { label: string; tone?: "warn" | "good" }[] = [];
+  // only search turns these up: under way, but registration has closed
+  if (!lifecycle(h, now).regOpen) flags.push({ label: "Registration closed", tone: "warn" });
   if (busyClash) flags.push({ label: `Clashes with ${busyClash}`, tone: "warn" });
   if (h.deadline_extended) flags.push({ label: "Deadline extended", tone: "good" });
   if (h.registration_fee) flags.push({ label: "Paid entry", tone: "warn" });

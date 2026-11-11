@@ -1,7 +1,7 @@
 import { ArrowUpRight, CalendarPlus, Check, Copy, Download, Flag, X } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
-import { useCatalog, useNow } from "../lib/catalog";
+import { useCatalog, useFullListing, useNow, useOffBoard } from "../lib/catalog";
 import {
   fmtDateTime,
   fmtDuration,
@@ -55,7 +55,11 @@ export function DetailSheet() {
   const [copied, setCopied] = useState(false);
 
   const id = new URLSearchParams(location.search).get("h");
-  const h = id ? byId.get(id) : undefined;
+  // on the board, or fetched: closed and ended notices are reachable by their link
+  const offBoard = useOffBoard(id ? [id] : []);
+  const listed = id ? (byId.get(id) ?? offBoard.get(id) ?? undefined) : undefined;
+  const h = useFullListing(listed);
+  const lookingUp = !!id && !listed && (state === "loading" || (!byId.has(id) && !offBoard.has(id)));
   const tracked = id ? (store.items[id] ?? (h ? store.items[h.id] : undefined)) : undefined;
   const open = !!id;
 
@@ -87,13 +91,13 @@ export function DetailSheet() {
   let body: React.ReactNode = null;
   if (open && !h) {
     body =
-      state === "loading" ? (
+      lookingUp ? (
         <p className="sheet__empty">Finding that notice…</p>
       ) : (
         <div className="sheet__empty">
           <h2 className="sheet__title">This notice has come down</h2>
           <p>
-            It ended more than 30 days ago or the platform removed it.
+            It ended a while ago or the platform took it down.
             {tracked && " Your notes on it are still in My tabs."}
           </p>
           {tracked && (
@@ -115,6 +119,7 @@ export function DetailSheet() {
     if (h.registration_fee) warnings.push("This event charges an entry fee. Check what it covers before paying.");
     if (h.invite_only) warnings.push("Invite-only: you need an invitation from the organisers to take part.");
     if (h.delisted) warnings.push(`${h.sourceName} no longer lists this event, so registration has probably closed.`);
+    else if (!regOpen && status !== "ended") warnings.unshift("Registration has closed.");
     if (!prize.main && status !== "ended") warnings.push("No prize details are published yet.");
     const clash = h.start
       ? busyRanges(store).find((b) => h.start! <= b.to && (h.end && h.end - h.start! < 10 * 86_400_000 ? h.end : h.start! + 86_400_000) >= b.from)

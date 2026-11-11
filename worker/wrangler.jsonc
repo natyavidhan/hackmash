@@ -1,18 +1,27 @@
 {
   // Hackmash on Cloudflare Workers.
-  // Static assets (the React app + /data/catalog.json written by the refresher)
-  // are served straight from Cloudflare's edge; only /api/* wakes the Python Worker.
+  // The React app is served straight from Cloudflare's edge as static assets;
+  // /api/* and /data/* run the Worker (src/index.ts), which reads D1. The data is
+  // written by the home server's sync job (backend: `hackmash sync`) through
+  // /api/ingest/*, authorised by the INGEST_KEY secret (`wrangler secret put INGEST_KEY`).
   "$schema": "./node_modules/wrangler/config-schema.json",
   "name": "hackmash",
-  "main": "src/entry.py",
+  "main": "src/index.ts",
   "compatibility_date": "2026-10-01",
-  "compatibility_flags": ["python_workers"],
   "assets": {
     "directory": "../frontend/dist",
     "binding": "ASSETS",
     "not_found_handling": "single-page-application",
-    "run_worker_first": ["/api/*"]
+    "run_worker_first": ["/api/*", "/data/*"]
   },
+  "d1_databases": [
+    {
+      "binding": "DB",
+      "database_name": "hackmash",
+      "database_id": "54ee9d04-d218-4af9-ba49-a75e9f1c5f78",
+      "migrations_dir": "migrations"
+    }
+  ],
   // hackmash.xyz is served by this Worker (Cloudflare creates the DNS records
   // and certificate). www bounces to the apex from frontend/index.html.
   "routes": [
@@ -20,5 +29,6 @@
     { "pattern": "www.hackmash.xyz", "custom_domain": true }
   ],
   "workers_dev": true,
+  "upload_source_maps": true,
   "observability": { "enabled": true }
 }

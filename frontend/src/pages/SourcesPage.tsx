@@ -81,7 +81,7 @@ export function SourcesPage() {
             <a href="https://github.com/natyavidhan/hackmash/issues" target="_blank" rel="noopener noreferrer">
               Open an issue
             </a>
-            . Developers can use the same data from the <a href="/api/docs">public API</a>.
+            . Developers can use the same data from the <a href="https://github.com/natyavidhan/hackmash#api">public API</a>.
           </li>
         </ul>
       </section>

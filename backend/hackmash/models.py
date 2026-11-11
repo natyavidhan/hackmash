@@ -166,6 +166,10 @@ def lifecycle(h: RawHackathon, now: datetime | None = None) -> tuple[Status, boo
     if h.registration_deadline and h.registration_deadline <= now:
         reg_open = False
     if h.starts_at and h.starts_at <= now:
+        # nobody walks into an in-person hackathon that is already under way,
+        # even when the platform never published a registration deadline
+        if getattr(h, "mode", None) == "in_person" and not h.registration_deadline:
+            reg_open = False
         return "live", reg_open
     if not reg_open:
         return "upcoming", False

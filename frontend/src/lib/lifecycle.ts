@@ -12,7 +12,11 @@ export function lifecycle(h: Hackathon, now: number): { status: Status; regOpen:
   if (h.regDeadline !== undefined && h.regDeadline <= now) regOpen = false;
   // a platform that stopped listing an event usually closed registration
   if (h.delisted && h.regDeadline === undefined) regOpen = false;
-  if (h.start !== undefined && h.start <= now) return { status: "live", regOpen };
+  if (h.start !== undefined && h.start <= now) {
+    // nobody walks into an in-person hackathon that is already under way
+    if (h.mode === "in_person" && h.regDeadline === undefined) regOpen = false;
+    return { status: "live", regOpen };
+  }
   if (!regOpen) return { status: "upcoming", regOpen: false };
   return { status: "open", regOpen: true };
 }

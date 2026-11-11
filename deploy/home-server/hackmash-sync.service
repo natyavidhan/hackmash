@@ -1,0 +1,17 @@
+# Installed by deploy/home-server/install.sh (which fills in @REPO@ and @UV@).
+[Unit]
+Description=Hackmash: fetch every hackathon platform and update the site's database
+Documentation=https://github.com/natyavidhan/hackmash#keeping-it-fresh-the-home-server
+Wants=network-online.target
+After=network-online.target
+
+[Service]
+Type=oneshot
+WorkingDirectory=@REPO@/backend
+# HACKMASH_INGEST_KEY, HACKMASH_API and HACKMASH_DATA_DIR
+EnvironmentFile=%h/.config/hackmash/sync.env
+ExecStart=@UV@ run --frozen --no-dev hackmash sync
+TimeoutStartSec=30min
+Nice=10
+IOSchedulingClass=idle
+NoNewPrivileges=true

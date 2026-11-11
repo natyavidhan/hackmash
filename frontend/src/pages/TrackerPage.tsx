@@ -1,9 +1,9 @@
 import { ArrowUpRight, CalendarClock, ChevronDown, ClipboardCopy, Download, Link2, Plus, Share2, Trash2, Upload, X } from "lucide-react";
-import { useMemo, useRef, useState } from "react";
+import { useCallback, useMemo, useRef, useState } from "react";
 import { Link, useSearchParams } from "react-router-dom";
 import { OpenNoticeLink } from "../components/NoticeParts";
 import { useToast } from "../components/Toast";
-import { useCatalog, useNow } from "../lib/catalog";
+import { useCatalog, useNow, useOffBoard } from "../lib/catalog";
 import { countdown, fmtDate, fmtDay, fmtMonth, fmtRange, fmtTime, plural } from "../lib/format";
 import { DAY, HOUR } from "../lib/lifecycle";
 import { busyRanges, CHECKLIST, STATUS_LABEL, TRACK_STATUSES, tracker, useStore, type Tracked, type TrackStatus } from "../lib/tracker";
@@ -82,12 +82,18 @@ export function TrackerPage() {
   const fileRef = useRef<HTMLInputElement>(null);
   const [showDropped, setShowDropped] = useState(false);
 
+  // a friend's shared list: /tracker?shared=a,b,c
+  const sharedIds = (sp.get("shared") ?? "").split(",").filter(Boolean);
+  // tabs and shared notices that are off the board (closed, ended) come from the API
+  const offBoard = useOffBoard([...Object.keys(store.items), ...sharedIds]);
+  const lookup = useCallback((id: string) => byId.get(id) ?? offBoard.get(id) ?? undefined, [byId, offBoard]);
+
   const rows = useMemo(
     () =>
       Object.values(store.items)
-        .map((t) => toRow(t, byId.get(t.id)))
+        .map((t) => toRow(t, lookup(t.id)))
         .sort((a, b) => (a.start ?? Infinity) - (b.start ?? Infinity)),
-    [store.items, byId],
+    [store.items, lookup],
   );
   const active = rows.filter((r) => ACTIVE.includes(r.t.status));
 
@@ -154,9 +160,7 @@ export function TrackerPage() {
   const icsPath = `/api/calendar.ics?ids=${encodeURIComponent(ids.join(","))}`;
   const webcal = `${window.location.origin.replace(/^https?/, "webcal")}${icsPath}`;
 
-  // a friend's shared list: /tracker?shared=a,b,c
-  const sharedIds = (sp.get("shared") ?? "").split(",").filter(Boolean);
-  const shared = sharedIds.map((id) => byId.get(id)).filter((h): h is Hackathon => !!h);
+  const shared = sharedIds.map(lookup).filter((h): h is Hackathon => !!h);
 
   const copy = async (text: string, msg: string) => {
     try {
