@@ -39,7 +39,7 @@ The wider landscape (who uses which platform, enterprise tools, dead and merged 
 | `dorahacks` | 11 | Public hub API (ongoing and upcoming) plus a detail call per event | No registration deadline, team size or eligibility. Token prizes (e.g. ADA) are shown as text only. |
 | `ethglobal` | 1 | Data embedded in the events page and each event page, with exact times taken from the event schedule | Event pages currently answer HTTP 500 while still carrying full data; the adapter accepts that. |
 | `taikai` | 2 | Public GraphQL API, challenges with a timeline step still ahead | No mode or venue field; mode is set only when the text says so. |
-| `lablab` | 2 | Data embedded in the AI-hackathons page plus each event page | No registration or submission deadlines. The prize is read from page text, which is fragile. |
+| `lablab` | (off) | Data embedded in the AI-hackathons page plus each event page | **Paused** (Nov 2026): lablab.ai now redirects to Starfield Labs (starfieldlabs.ai), which lists no events yet and disallows its `/api/` in robots.txt. The adapter is kept for reference. |
 | `encode` | 2 | The site's public read-only database API (programmes, prize tracks, venues) | Venue comes as one address string. |
 | `akindo` | 3 | Public WaveHack and hackathon APIs | A WaveHack is listed by its current wave (dates and grant for that wave). |
 | `hackquest` | 1 | Public GraphQL API | Venue is free text. Prize pools in mixed currencies get no amount. |

@@ -117,6 +117,10 @@ def find_prize(text: str) -> str | None:
 
 
 class Lablab(Source):
+    # November 2026: lablab.ai now redirects to starfieldlabs.ai ("Starfield Labs"), whose
+    # events page lists nothing yet and whose /api/ is disallowed in robots.txt. Off until
+    # the new site publishes events in a form we may read; the adapter is kept for reference.
+    enabled = False
     key = "lablab"
     name = "lablab.ai"
     homepage = "https://lablab.ai/ai-hackathons"

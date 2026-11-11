@@ -5,7 +5,7 @@
 <p align="center"><strong>Every hackathon from every platform, on one board.</strong></p>
 
 <p align="center">
-Devpost, Unstop, Devfolio, MLH, HackerEarth, Hack2skill, DoraHacks, ETHGlobal, lablab.ai, Kaggle and 16 more,
+Devpost, Unstop, Devfolio, MLH, HackerEarth, Hack2skill, DoraHacks, ETHGlobal, Kaggle and 16 more,
 in one format, with filters that help you choose. Apply on the original platform; track what you applied to right here, with no account.
 </p>
 
@@ -20,7 +20,7 @@ Hackathons are scattered over dozens of platforms. Indian college events live on
 ## What it does
 
 **One board, every platform**
-- 26 sources (listed below), refreshed every three hours.
+- 25 sources (listed below), refreshed every three hours.
 - The board shows what you can still sign up for. Searching also finds events under way whose registration has closed, marked as such; anything else (ended, or closed and not started) opens from its link.
 - The same event listed on several platforms (for example MLH + Devpost) is merged into one notice with "Also on" links.
 - Every notice links straight to the page where you register. Hackmash never sits between you and the apply button.
@@ -99,7 +99,6 @@ Hackathons are scattered over dozens of platforms. Indian college events live on
 | Global | [HackQuest](https://www.hackquest.io/hackathons) | Web3 ecosystem hackathons and buildathons |
 | Global | [Encode Club](https://www.encodeclub.com/programmes) | Web3 and AI hackathons with ecosystem partners |
 | Global | [AKINDO](https://app.akindo.io/wave-hacks) | Web3 WaveHack grant sprints |
-| Global | [lablab.ai](https://lablab.ai/ai-hackathons) | AI hackathons with AI companies |
 | Global | [Kaggle](https://www.kaggle.com/competitions) | Machine-learning competitions |
 | Global | [Zindi](https://zindi.world/competitions) | Data-science competitions for Africa and the Global South |
 | Global | [DrivenData](https://www.drivendata.org/competitions/) | Social-impact ML competitions |
@@ -112,7 +111,7 @@ How each platform is read, and the ones that could not be added (login walls, Ja
  home server, every 3 hours                       Cloudflare
 ┌──────────────────────────────┐   HTTPS   ┌─────────────────────────────────────────┐
 │ hackmash sync (Python)       │  bearer   │ Worker (TypeScript)                     │
-│  26 platform adapters        │   key     │  /api/ingest/*  writes ──▶ D1 (SQLite)  │
+│  25 platform adapters        │   key     │  /api/ingest/*  writes ──▶ D1 (SQLite)  │
 │  normalise, dedupe, catalog  │ ────────▶ │  /api/*         reads  ◀── D1           │
 │  send only the changed rows  │           │  static assets: the React app           │
 └──────────────────────────────┘           └─────────────────────────────────────────┘
