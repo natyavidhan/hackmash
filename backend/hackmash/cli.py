@@ -5,7 +5,8 @@
     hackmash refresh [keys...]       fetch sources, update state, write the catalog
     hackmash rebuild                 rewrite the catalog from saved state (no fetching)
     hackmash push [--dry-run]        send the catalog's changes to the site's database
-    hackmash sync [--dry-run]        refresh, then push: what the home server's timer runs
+    hackmash sync [--dry-run]        refresh, push, then draw link previews: what the home server runs
+    hackmash og [--force] [--out D]  draw link-preview posters that changed (or all) and send them
     hackmash serve                   run the API server locally
 
 push and sync read HACKMASH_API (default https://hackmash.xyz) and
@@ -208,6 +209,47 @@ def _cmd_push(args: argparse.Namespace) -> int:
     return _push_catalog(args)
 
 
+def _publish_posters(args: argparse.Namespace, *, force: bool = False, only: list[str] | None = None, out: str | None = None) -> int:
+    """Draw the link-preview posters that changed and send them. 0 = done or skipped, 1 = failed."""
+    from pathlib import Path
+
+    from .state import FileStore
+    from .sync import DEFAULT_API, IngestClient
+
+    try:
+        import playwright  # noqa: F401  (the `og` extra)
+
+        from .og.render import publish_posters
+    except ImportError:
+        print("link previews skipped: install them with `uv sync --extra og` and `uv run playwright install chromium --only-shell`")
+        return 0
+    store = FileStore()
+    data = asyncio.run(store.load_catalog())
+    if data is None:
+        print("no catalog yet: run `hackmash refresh` first", file=sys.stderr)
+        return 1
+    client = None
+    if not out:
+        key = os.environ.get("HACKMASH_INGEST_KEY", "")
+        if not key:
+            print("HACKMASH_INGEST_KEY is not set, so posters can't be sent (or pass --out DIR)", file=sys.stderr)
+            return 1
+        client = IngestClient(args.api or os.environ.get("HACKMASH_API") or DEFAULT_API, key)
+    try:
+        report = asyncio.run(
+            publish_posters(json.loads(data), client, store.dir, force=force, only=set(only) if only else None, out_dir=Path(out) if out else None)
+        )
+    except Exception as exc:  # noqa: BLE001 - the data is already published; report and move on
+        print(f"!! link-preview posters failed: {type(exc).__name__}: {exc}", file=sys.stderr)
+        return 1
+    print(report.summary())
+    return 1 if report.failed and not report.drawn else 0
+
+
+def _cmd_og(args: argparse.Namespace) -> int:
+    return _publish_posters(args, force=args.force, only=args.only, out=args.out)
+
+
 def wait_for_network(url: str, timeout: float = 180.0, interval: float = 5.0) -> bool:
     """Wait until the site's host name resolves.
 
@@ -244,6 +286,8 @@ def _cmd_sync(args: argparse.Namespace) -> int:
         if _cmd_refresh(argparse.Namespace(keys=[])) != 0:
             print("some platforms failed; they keep their previous listings")
         code = _push_catalog(args)
+        if code == 0 and not args.dry_run and not args.no_posters:
+            code = _publish_posters(args)
         print(f"sync finished in {time.monotonic() - started:.0f}s")
         return code
 
@@ -283,7 +327,16 @@ def main(argv: list[str] | None = None) -> int:
         p.add_argument("--dry-run", action="store_true", help="compare with the database but change nothing")
         p.add_argument("--force", action="store_true", help="publish even if the catalog looks broken")
         p.add_argument("--api", help="site to push to (default: $HACKMASH_API or https://hackmash.xyz)")
+        if name == "sync":
+            p.add_argument("--no-posters", action="store_true", help="skip drawing link-preview posters")
         p.set_defaults(func=func)
+
+    p = sub.add_parser("og", help="draw link-preview posters that changed and send them")
+    p.add_argument("--force", action="store_true", help="draw every poster again")
+    p.add_argument("--only", nargs="+", metavar="ID", help="just these hackathons")
+    p.add_argument("--out", metavar="DIR", help="write the images to DIR instead of sending them")
+    p.add_argument("--api", help="site to send to (default: $HACKMASH_API or https://hackmash.xyz)")
+    p.set_defaults(func=_cmd_og)
 
     p = sub.add_parser("serve", help="run the API server")
     p.add_argument("--host", default="127.0.0.1")

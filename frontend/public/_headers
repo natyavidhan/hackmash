@@ -7,3 +7,7 @@
 
 /favicon.svg
   Cache-Control: public, max-age=86400
+
+# the site's own link-preview card (a shared notice uses /og/<id>.jpg instead)
+/og-default.jpg
+  Cache-Control: public, max-age=86400

@@ -32,7 +32,9 @@ data_dir="$(sed -n 's/^HACKMASH_DATA_DIR=//p' "$env_file")"
 [ -n "$data_dir" ] && mkdir -p "$data_dir"
 
 echo "installing dependencies…"
-(cd "$repo/backend" && "$uv" sync --frozen --no-dev --quiet)
+(cd "$repo/backend" && "$uv" sync --frozen --no-dev --extra og --quiet)
+echo "installing the headless browser that draws link-preview posters (once, ~100 MB)…"
+(cd "$repo/backend" && "$uv" run --frozen --no-dev --extra og playwright install chromium --only-shell)
 
 mkdir -p "$units"
 sed -e "s#@REPO@#$repo#g" -e "s#@UV@#$uv#g" "$here/hackmash-sync.service" > "$units/hackmash-sync.service"

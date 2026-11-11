@@ -2,9 +2,11 @@
  * Hackmash on Cloudflare Workers.
  *
  * Static assets (the React app) are served straight from Cloudflare's edge; only
- * /api/* and /data/* run this Worker, which reads Cloudflare D1. The data is
- * written by the home server's sync job through /api/ingest/* (see ingest.ts).
+ * /, /api/*, /data/* and /og/* run this Worker, which reads Cloudflare D1. The data
+ * is written by the home server's sync job through /api/ingest/* (see ingest.ts).
  *
+ *   GET /?h={id}                            the app, with that hackathon's link-preview tags (share.ts)
+ *   GET /og/{id}.jpg                        its link-preview poster (share.ts)
  *   GET /api/catalog                        the feed the web app filters locally (ETag + 304)
  *   GET /api/hackathons                     search for scripts and integrations (see search.ts)
  *   GET /api/hackathons/{id}                one listing, ended ones too (also resolves merged ids)
@@ -21,6 +23,7 @@ import { calendar } from "./ics";
 import { ingest } from "./ingest";
 import { enrich } from "./lifecycle";
 import { search } from "./search";
+import { page, poster } from "./share";
 
 const API_VERSION = "0.2.0";
 const STALE_AFTER = 12 * 3_600_000;
@@ -80,6 +83,18 @@ async function route(request: Request, env: Env, ctx: ExecutionContext): Promise
     return new Response(null, { status: 204, headers: { ...CORS, "Access-Control-Allow-Methods": "GET, HEAD", "Access-Control-Max-Age": "86400" } });
   }
   if (request.method !== "GET" && request.method !== "HEAD") return fail(405, "method not allowed");
+
+  if (path === "/") return page(request, env, url);
+  const og = path.match(/^\/og\/([^/]+)\.jpg$/);
+  if (og) {
+    let id: string;
+    try {
+      id = decodeURIComponent(og[1]);
+    } catch {
+      return fail(400, "bad id");
+    }
+    return poster(request, env, ctx, id, url);
+  }
 
   if (path === "/api/catalog" || path === "/data/catalog.json") {
     const feed = await getFeed(env, ctx, url.origin);

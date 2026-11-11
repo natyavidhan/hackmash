@@ -30,10 +30,12 @@ from collections.abc import Iterator
 from dataclasses import asdict, dataclass
 from datetime import datetime, timedelta, timezone
 from typing import Any
+from urllib.parse import quote
 
 import httpx
 
 from . import __version__
+from .share import ShareContext, blurb, card_for
 
 log = logging.getLogger("hackmash.sync")
 
@@ -115,6 +117,8 @@ class Row:
     registration_deadline: str | None
     submission_deadline: str | None
     listed_until: str
+    blurb: str  # the line under a shared link's preview
+    og: str  # the link-preview poster's content hash (hackmash.share)
     aliases: tuple[str, ...]  # ids of the same event on other platforms
 
     def payload(self) -> dict[str, Any]:
@@ -123,13 +127,15 @@ class Row:
         return d
 
 
-def make_row(item: dict[str, Any]) -> Row:
+def make_row(item: dict[str, Any], ctx: ShareContext | None = None) -> Row:
     detail = _stable(item)
     card = {k: v for k, v in detail.items() if k not in DETAIL_ONLY}
     card_text, detail_text = _dumps(card), _dumps(detail)
     until = listed_until(item)
     aliases = tuple(sorted({o["id"] for o in item.get("also_on") or [] if o.get("id") and o["id"] != item["id"]}))
-    digest = hashlib.sha256("\x1f".join((card_text, detail_text, until, ",".join(aliases))).encode()).hexdigest()
+    share = card_for(item, ctx or ShareContext.from_catalog({}))
+    text = blurb(share)
+    digest = hashlib.sha256("\x1f".join((card_text, detail_text, until, ",".join(aliases), text, share.hash)).encode()).hexdigest()
     return Row(
         id=item["id"],
         source=item["source"],
@@ -142,14 +148,17 @@ def make_row(item: dict[str, Any]) -> Row:
         registration_deadline=utc_text(_parse(item.get("registration_deadline"))),
         submission_deadline=utc_text(_parse(item.get("submission_deadline"))),
         listed_until=until,
+        blurb=text,
+        og=share.hash,
         aliases=aliases,
     )
 
 
-def rows_from_catalog(doc: dict[str, Any]) -> list[Row]:
+def rows_from_catalog(doc: dict[str, Any], now: datetime | None = None) -> list[Row]:
+    ctx = ShareContext.from_catalog(doc, now)
     rows: dict[str, Row] = {}
     for item in doc.get("items", []):
-        row = make_row(item)
+        row = make_row(item, ctx)
         rows[row.id] = row
     return list(rows.values())
 
@@ -194,10 +203,10 @@ class IngestClient:
         self.headers = {"Authorization": f"Bearer {key}", "User-Agent": f"hackmash-sync/{__version__}"}
         self.requests = 0
 
-    def _call(self, method: str, path: str, body: str | None = None) -> dict[str, Any]:
+    def _call(self, method: str, path: str, body: str | bytes | None = None, content_type: str = "application/json") -> dict[str, Any]:
         headers = dict(self.headers)
         if body is not None:
-            headers["Content-Type"] = "application/json"
+            headers["Content-Type"] = content_type
         last: Exception | None = None
         for attempt in range(4):
             if attempt:
@@ -227,6 +236,13 @@ class IngestClient:
 
     def commit(self, meta: dict[str, Any]) -> dict[str, Any]:
         return self._call("POST", "commit", _dumps(meta))
+
+    def og_state(self) -> dict[str, Any]:
+        """Content hash of every link-preview poster the site holds."""
+        return self._call("GET", "og")
+
+    def put_og(self, hid: str, digest: str, jpeg: bytes) -> dict[str, Any]:
+        return self._call("PUT", f"og/{quote(hid, safe='')}?hash={digest}", jpeg, "image/jpeg")
 
 
 def upsert_bodies(rows: list[Row], limit: int | None = None) -> Iterator[str]:

@@ -65,6 +65,10 @@ Hackathons are scattered over dozens of platforms. Indian college events live on
 - When a platform stops listing an event it is marked and leaves the board, but it stays in your tabs.
 - Every notice shows where it came from and when it was last checked. The [Sources](#platforms) page shows each platform's health.
 
+**Link previews**
+- Share a notice and WhatsApp, X, LinkedIn, Slack or Discord shows a poster for it: the title, the deadline stamp, the prize, where and when, in the board's own paper-and-stamp look, with a one-line summary under it.
+- Every hackathon gets its own poster, drawn by the home server and redrawn only when what it shows changes. Dates are absolute ("Last date · 13 Nov"), because apps keep a preview for days.
+
 **Public API**
 - `GET /api/hackathons` with the same filters, and every listing by id. See [API](#api).
 
@@ -128,7 +132,7 @@ How each platform is read, and the ones that could not be added (login walls, Ja
   - `api.py`: the same API as FastAPI, for running everything locally without Cloudflare.
 - **State** is one JSON document (`state.json.gz`) holding listings with first/last-seen times, deadline changes and per-source run logs. It stays on the home server.
 - **Database: Cloudflare D1.** One row per hackathon: a compact `card` (what the board needs), the full `detail`, a content hash and `listed_until`. Schema: `worker/migrations/`.
-- **Worker (TypeScript)**, in `worker/src/`. It joins the cards of every current hackathon into the feed the web app downloads (about 70 KB compressed), builds it once per sync and keeps it in memory, in Cloudflare's cache and in browsers (ETag, so a returning visitor gets a 304). Detail views, closed and ended listings, calendars and search are served from D1 on demand. Writes come only through `/api/ingest/*` with a secret key.
+- **Worker (TypeScript)**, in `worker/src/`. It joins the cards of every current hackathon into the feed the web app downloads (about 70 KB compressed), builds it once per sync and keeps it in memory, in Cloudflare's cache and in browsers (ETag, so a returning visitor gets a 304). Detail views, closed and ended listings, calendars and search are served from D1 on demand. Writes come only through `/api/ingest/*` with a secret key. For a shared link (`/?h=<id>`) it rewrites the page's preview tags, since link-preview crawlers don't run JavaScript.
 - **Frontend (React 19, TypeScript, Vite)**, in `frontend/`. It filters the feed in the browser, so filtering is instant, re-checks it every 30 minutes while open, and fetches a notice's long text when you open it. The tracker is `localStorage` only.
 
 ## Run it locally
@@ -162,7 +166,8 @@ uv run hackmash fetch unstop --json
 uv run hackmash refresh devpost mlh   # fetch some (or all) sources and write the catalog
 uv run hackmash rebuild            # rewrite the catalog from saved state, no fetching
 uv run hackmash push --dry-run     # what would change in the site's database
-uv run hackmash sync               # refresh + push: what the home server runs
+uv run hackmash sync               # refresh + push + posters: what the home server runs
+uv run --extra og hackmash og --out /tmp/posters --only devpost-31024   # draw link-preview posters to look at
 uv run pytest                      # tests
 ```
 
@@ -180,6 +185,7 @@ Free to use at `https://hackmash.xyz`, read-only, CORS open.
 | `GET /api/calendar.ics?ids=a,b,c` | A subscribable calendar for a list of hackathons |
 | `GET /api/sources` | Platforms and their fetch health |
 | `GET /api/health` | Whether data is in, and how fresh it is |
+| `GET /og/{id}.jpg` | A hackathon's 1200×630 link-preview poster |
 
 Ended events stay reachable by id for 90 days. Locally, `hackmash serve` offers the same routes plus interactive docs at `/api/docs`.
 
@@ -221,6 +227,8 @@ npm run deploy      # builds the web app, applies database migrations, deploys
 ### Keeping it fresh: the home server
 
 Scraping needs real CPython and a few hundred outbound requests, so it runs on a machine you own. Every three hours a systemd timer runs `hackmash sync`: fetch every platform, rebuild the catalog, and send only the rows that changed. It refuses to publish a catalog that looks broken (fewer than 100 listings or 3 healthy platforms) or that would delete more than half the database in one go. The next run repairs a run that failed halfway, because each run compares against what the database actually holds.
+
+It then draws link-preview posters for the hackathons whose poster would look different: headless Chromium renders `backend/hackmash/og/poster.html` (about 5 posters a second), and the site serves them from D1. The browser never touches the network: logos are fetched by Python (https, public addresses only, size-capped, cached) and handed in as data. This needs the `og` extra, which `install.sh` sets up, browser included.
 
 ```bash
 git clone https://github.com/natyavidhan/hackmash ~/services/hackmash

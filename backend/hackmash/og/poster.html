@@ -1,0 +1,127 @@
+<!doctype html>
+<!--
+  A hackathon's link-preview poster, 1200×630 (design B, chosen 2026-11-11).
+  hackmash/og/render.py loads this page once in headless Chromium, then calls
+  window.render(card) for each hackathon and screenshots it. Nothing here may
+  reach the network: logos arrive as data: URIs, and the policy below forbids
+  everything else.
+-->
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; img-src data: file:; style-src 'unsafe-inline'; font-src file:; script-src 'unsafe-inline'">
+<style>
+@font-face { font-family: "Archivo"; src: url("assets/archivo-latin.woff2") format("woff2-variations"); font-weight: 100 900; font-stretch: 62% 125%; }
+@font-face { font-family: "Archivo"; src: url("assets/archivo-latin-ext.woff2") format("woff2-variations"); font-weight: 100 900; font-stretch: 62% 125%;
+  unicode-range: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C0, U+2113, U+2C60-2C7F, U+A720-A7FF; }
+:root {
+  --cork: #c69259; --paper: #fdfcf8; --paper-yellow: #fff1a1; --paper-blue: #dce9ff; --paper-green: #d8f2df; --paper-pink: #ffdfe8;
+  --ink: #1d1712; --ink-2: #4f463c; --ink-3: #6f665b; --ink-line: rgb(29 23 18 / 0.16);
+  --stamp: #c3122b; --live: #0f7a45; --pin-red: #e0262f;
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+html, body { width: 1200px; height: 630px; overflow: hidden; }
+body { font-family: "Archivo", sans-serif; color: var(--ink); font-variant-numeric: tabular-nums; -webkit-font-smoothing: antialiased;
+  background-color: var(--cork); background-image: radial-gradient(ellipse at 50% 45%, transparent 55%, rgb(60 30 5 / 0.3) 100%), url("assets/cork.svg");
+  background-size: 100% 100%, 230px 230px; }
+.white { --stock: var(--paper); } .yellow { --stock: var(--paper-yellow); } .blue { --stock: var(--paper-blue); }
+.green { --stock: var(--paper-green); } .pink { --stock: var(--paper-pink); }
+.pin { position: absolute; width: var(--pin, 26px); height: var(--pin, 26px); border-radius: 50%; z-index: 5;
+  background: radial-gradient(circle at 34% 32%, rgb(255 255 255 / 0.78) 0 10%, transparent 17%), radial-gradient(circle at 60% 65%, rgb(0 0 0 / 0.2), transparent 70%), var(--pin-red);
+  box-shadow: 0 3px 3px rgb(20 10 0 / 0.35), 2px 7px 8px rgb(20 10 0 / 0.22); }
+.poster { position: absolute; inset: 26px 30px 30px; padding: 40px 54px 0; background: var(--stock); border-radius: 3px; transform: rotate(-0.4deg);
+  box-shadow: 0 3px 4px rgb(52 28 6 / 0.22), 0 34px 48px -22px rgb(52 28 6 / 0.7); display: flex; flex-direction: column; }
+.poster > .pin { --pin: 32px; left: calc(50% - 16px); top: -12px; }
+.head { display: flex; align-items: center; gap: 18px; padding-right: 230px; min-height: 64px; }
+.head img { width: 64px; height: 64px; border-radius: 8px; border: 1px solid var(--ink-line); flex: none; object-fit: contain; background: #fff; }
+.letter { min-width: 0; display: flex; flex-direction: column; gap: 2px; }
+.platform { font-size: 22px; font-weight: 780; letter-spacing: 0.08em; text-transform: uppercase; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.org { font-size: 24px; color: var(--ink-2); font-weight: 560; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.title { margin-top: 22px; font-weight: 850; font-stretch: 68%; line-height: 0.94; letter-spacing: -0.01em; overflow-wrap: anywhere; }
+.clamp { display: -webkit-box; -webkit-box-orient: vertical; overflow: hidden; }
+.facts { margin-top: 18px; font-size: 25px; font-weight: 600; color: var(--ink-2); display: flex; gap: 8px 22px; flex-wrap: wrap; max-height: 64px; overflow: hidden; }
+.facts span { display: inline-flex; align-items: center; gap: 8px; white-space: nowrap; }
+.icon { width: 1em; height: 1em; fill: none; stroke: var(--ink-3); stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; flex: none; }
+.spacer { flex: 1; }
+.foot { display: flex; align-items: flex-end; justify-content: space-between; gap: 30px; padding-bottom: 34px; }
+.stamp { display: inline-flex; align-items: baseline; gap: 0.4em; padding: 0.2em 0.5em 0.14em; border: 0.1em solid currentColor; border-radius: 0.14em;
+  color: var(--stamp); font-size: 40px; font-weight: 780; font-stretch: 70%; letter-spacing: 0.05em; text-transform: uppercase; line-height: 1.02;
+  white-space: nowrap; transform: rotate(-4deg); margin-bottom: 10px; -webkit-mask-size: 300px 100px;
+  /* inline: Chromium fetches mask images in CORS mode, which file: pages fail */
+  -webkit-mask-image: url("data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIxMjAiIGhlaWdodD0iNDAiPjxyZWN0IHdpZHRoPSIxMjAiIGhlaWdodD0iNDAiIGZpbGw9IiNmZmYiLz48ZyBmaWxsPSIjMDAwIiBmaWxsLW9wYWNpdHk9Ii43Ij48Y2lyY2xlIGN4PSIzNCIgY3k9IjE3IiByPSIwLjgiLz48Y2lyY2xlIGN4PSIxMyIgY3k9IjE3IiByPSIxLjIiLz48Y2lyY2xlIGN4PSIyMSIgY3k9IjMwIiByPSIxLjIiLz48Y2lyY2xlIGN4PSI1MiIgY3k9IjMzIiByPSIxLjIiLz48Y2lyY2xlIGN4PSIzMiIgY3k9IjM1IiByPSIxLjEiLz48Y2lyY2xlIGN4PSI3OSIgY3k9IjEwIiByPSIwLjQiLz48Y2lyY2xlIGN4PSIxNCIgY3k9IjEiIHI9IjAuNSIvPjxjaXJjbGUgY3g9IjExNCIgY3k9IjE3IiByPSIxLjAiLz48Y2lyY2xlIGN4PSIyNiIgY3k9IjIzIiByPSIwLjkiLz48Y2lyY2xlIGN4PSIyNCIgY3k9IjI0IiByPSIxLjMiLz48Y2lyY2xlIGN4PSI4NiIgY3k9IjI3IiByPSIwLjYiLz48Y2lyY2xlIGN4PSIyNSIgY3k9IjM3IiByPSIwLjQiLz48Y2lyY2xlIGN4PSI4MiIgY3k9IjE2IiByPSIwLjYiLz48Y2lyY2xlIGN4PSI3OCIgY3k9IjM2IiByPSIwLjUiLz48Y2lyY2xlIGN4PSIxMDAiIGN5PSIxOCIgcj0iMS40Ii8+PGNpcmNsZSBjeD0iNSIgY3k9IjE1IiByPSIwLjciLz48Y2lyY2xlIGN4PSIxMSIgY3k9IjEyIiByPSIwLjYiLz48Y2lyY2xlIGN4PSI4NSIgY3k9IjEiIHI9IjEuMiIvPjxjaXJjbGUgY3g9IjY0IiBjeT0iNSIgcj0iMS4xIi8+PGNpcmNsZSBjeD0iNjkiIGN5PSIxNSIgcj0iMS4xIi8+PGNpcmNsZSBjeD0iMjIiIGN5PSIxOCIgcj0iMC41Ii8+PGNpcmNsZSBjeD0iMTMiIGN5PSIzIiByPSIxLjEiLz48Y2lyY2xlIGN4PSI2MyIgY3k9IjciIHI9IjAuNiIvPjxjaXJjbGUgY3g9IjQyIiBjeT0iMzgiIHI9IjAuOCIvPjxjaXJjbGUgY3g9IjExMiIgY3k9IjIxIiByPSIwLjkiLz48Y2lyY2xlIGN4PSIxMDIiIGN5PSIyMyIgcj0iMC41Ii8+PGNpcmNsZSBjeD0iOTkiIGN5PSIyIiByPSIxLjMiLz48Y2lyY2xlIGN4PSIxMTUiIGN5PSI3IiByPSIwLjgiLz48Y2lyY2xlIGN4PSI1MCIgY3k9IjI4IiByPSIxLjAiLz48Y2lyY2xlIGN4PSIxNiIgY3k9IjIxIiByPSIwLjQiLz48Y2lyY2xlIGN4PSI2OSIgY3k9IjM2IiByPSIxLjAiLz48Y2lyY2xlIGN4PSIyMSIgY3k9IjE0IiByPSIxLjEiLz48Y2lyY2xlIGN4PSIzMiIgY3k9IjEwIiByPSIxLjMiLz48Y2lyY2xlIGN4PSIyMSIgY3k9IjMzIiByPSIwLjYiLz48Y2lyY2xlIGN4PSIxMTciIGN5PSI3IiByPSIxLjAiLz48Y2lyY2xlIGN4PSI4NCIgY3k9IjEwIiByPSIwLjciLz48Y2lyY2xlIGN4PSI5MCIgY3k9IjMwIiByPSIwLjQiLz48Y2lyY2xlIGN4PSIzIiBjeT0iMzYiIHI9IjAuOCIvPjxjaXJjbGUgY3g9IjExNSIgY3k9IjEyIiByPSIwLjgiLz48Y2lyY2xlIGN4PSI1IiBjeT0iOCIgcj0iMC43Ii8+PGNpcmNsZSBjeD0iNzkiIGN5PSIzNiIgcj0iMS4wIi8+PGNpcmNsZSBjeD0iMjIiIGN5PSI0IiByPSIxLjAiLz48Y2lyY2xlIGN4PSI2IiBjeT0iMTMiIHI9IjAuNCIvPjxjaXJjbGUgY3g9Ijk1IiBjeT0iMTEiIHI9IjEuMiIvPjxjaXJjbGUgY3g9IjkiIGN5PSI5IiByPSIxLjEiLz48Y2lyY2xlIGN4PSI5NSIgY3k9IjE5IiByPSIxLjIiLz48Y2lyY2xlIGN4PSI5NCIgY3k9IjAiIHI9IjAuOCIvPjxjaXJjbGUgY3g9IjcyIiBjeT0iMzciIHI9IjAuOCIvPjxjaXJjbGUgY3g9IjQiIGN5PSIxMyIgcj0iMS4yIi8+PGNpcmNsZSBjeD0iMTIiIGN5PSIyNCIgcj0iMS4xIi8+PGNpcmNsZSBjeD0iMyIgY3k9IjAiIHI9IjEuMyIvPjxjaXJjbGUgY3g9Ijk0IiBjeT0iNyIgcj0iMC45Ii8+PGNpcmNsZSBjeD0iNDEiIGN5PSIzNCIgcj0iMC42Ii8+PGNpcmNsZSBjeD0iMTAxIiBjeT0iMjIiIHI9IjEuMSIvPjxjaXJjbGUgY3g9IjQ4IiBjeT0iMzYiIHI9IjEuMiIvPjxjaXJjbGUgY3g9IjY1IiBjeT0iNyIgcj0iMC41Ii8+PGNpcmNsZSBjeD0iNzUiIGN5PSIxNyIgcj0iMS4xIi8+PGNpcmNsZSBjeD0iMTAzIiBjeT0iMzkiIHI9IjAuOCIvPjxjaXJjbGUgY3g9IjIwIiBjeT0iMzEiIHI9IjEuMiIvPjxjaXJjbGUgY3g9IjI5IiBjeT0iMjMiIHI9IjAuNCIvPjxjaXJjbGUgY3g9Ijg0IiBjeT0iNCIgcj0iMC45Ii8+PGNpcmNsZSBjeD0iNjEiIGN5PSIzNCIgcj0iMS4yIi8+PGNpcmNsZSBjeD0iMTAxIiBjeT0iMTEiIHI9IjAuOSIvPjxjaXJjbGUgY3g9IjY4IiBjeT0iMjYiIHI9IjAuOCIvPjxjaXJjbGUgY3g9IjE0IiBjeT0iMzIiIHI9IjEuMiIvPjxjaXJjbGUgY3g9IjgxIiBjeT0iNCIgcj0iMC40Ii8+PGNpcmNsZSBjeD0iODUiIGN5PSIxNSIgcj0iMC44Ii8+PGNpcmNsZSBjeD0iMTYiIGN5PSIxMyIgcj0iMS4zIi8+PGNpcmNsZSBjeD0iNDYiIGN5PSIxNCIgcj0iMS4wIi8+PGNpcmNsZSBjeD0iMTE4IiBjeT0iMzUiIHI9IjAuNSIvPjwvZz48ZyBmaWxsPSIjMDAwIiBmaWxsLW9wYWNpdHk9Ii40Ij48Y2lyY2xlIGN4PSIzNSIgY3k9IjgiIHI9IjEuMyIvPjxjaXJjbGUgY3g9IjUyIiBjeT0iMjkiIHI9IjAuNSIvPjxjaXJjbGUgY3g9IjEyIiBjeT0iNSIgcj0iMC40Ii8+PGNpcmNsZSBjeD0iNjAiIGN5PSIyMSIgcj0iMC42Ii8+PGNpcmNsZSBjeD0iMTA1IiBjeT0iOCIgcj0iMS4zIi8+PGNpcmNsZSBjeD0iODgiIGN5PSIzOSIgcj0iMC41Ii8+PGNpcmNsZSBjeD0iNzIiIGN5PSIzIiByPSIxLjEiLz48Y2lyY2xlIGN4PSI1MCIgY3k9IjIzIiByPSIwLjgiLz48Y2lyY2xlIGN4PSI4NCIgY3k9IjUiIHI9IjEuMSIvPjxjaXJjbGUgY3g9IjE1IiBjeT0iMjEiIHI9IjEuMCIvPjxjaXJjbGUgY3g9IjEwMyIgY3k9IjIiIHI9IjEuMyIvPjxjaXJjbGUgY3g9IjY2IiBjeT0iMTkiIHI9IjEuMiIvPjxjaXJjbGUgY3g9IjY5IiBjeT0iMjkiIHI9IjEuMiIvPjxjaXJjbGUgY3g9IjExMyIgY3k9IjM5IiByPSIwLjkiLz48Y2lyY2xlIGN4PSI2NyIgY3k9IjkiIHI9IjAuOCIvPjxjaXJjbGUgY3g9IjcwIiBjeT0iMSIgcj0iMS4zIi8+PGNpcmNsZSBjeD0iMTE2IiBjeT0iNCIgcj0iMC43Ii8+PGNpcmNsZSBjeD0iMiIgY3k9IjI5IiByPSIwLjgiLz48Y2lyY2xlIGN4PSIxMDIiIGN5PSIzNyIgcj0iMC43Ii8+PGNpcmNsZSBjeD0iNCIgY3k9IjQiIHI9IjEuMyIvPjxjaXJjbGUgY3g9IjEwNSIgY3k9IjI0IiByPSIwLjYiLz48Y2lyY2xlIGN4PSI4MyIgY3k9IjMwIiByPSIxLjQiLz48Y2lyY2xlIGN4PSI4MSIgY3k9IjE0IiByPSIwLjYiLz48Y2lyY2xlIGN4PSIxIiBjeT0iNiIgcj0iMS40Ii8+PGNpcmNsZSBjeD0iODAiIGN5PSI4IiByPSIxLjEiLz48Y2lyY2xlIGN4PSI0MSIgY3k9IjM5IiByPSIwLjkiLz48Y2lyY2xlIGN4PSI4MiIgY3k9IjI5IiByPSIwLjgiLz48Y2lyY2xlIGN4PSIzMyIgY3k9IjE5IiByPSIwLjQiLz48Y2lyY2xlIGN4PSI5MyIgY3k9IjEzIiByPSIxLjAiLz48Y2lyY2xlIGN4PSI2MCIgY3k9IjIyIiByPSIxLjMiLz48Y2lyY2xlIGN4PSIyOSIgY3k9IjI5IiByPSIxLjAiLz48Y2lyY2xlIGN4PSI2MSIgY3k9IjMyIiByPSIxLjIiLz48Y2lyY2xlIGN4PSIxNSIgY3k9IjI1IiByPSIwLjUiLz48Y2lyY2xlIGN4PSIyNSIgY3k9IjQwIiByPSIxLjIiLz48Y2lyY2xlIGN4PSIxNSIgY3k9IjkiIHI9IjAuNyIvPjxjaXJjbGUgY3g9IjM2IiBjeT0iMjAiIHI9IjAuNiIvPjxjaXJjbGUgY3g9IjQyIiBjeT0iMjgiIHI9IjAuOSIvPjxjaXJjbGUgY3g9IjE1IiBjeT0iNCIgcj0iMC43Ii8+PGNpcmNsZSBjeD0iMjQiIGN5PSI5IiByPSIwLjUiLz48Y2lyY2xlIGN4PSIxMTUiIGN5PSIxMiIgcj0iMS4yIi8+PGNpcmNsZSBjeD0iMTA4IiBjeT0iMzYiIHI9IjEuMyIvPjxjaXJjbGUgY3g9IjEzIiBjeT0iMjIiIHI9IjAuNSIvPjxjaXJjbGUgY3g9Ijk5IiBjeT0iMzIiIHI9IjAuNiIvPjxjaXJjbGUgY3g9IjIwIiBjeT0iMyIgcj0iMC44Ii8+PGNpcmNsZSBjeD0iNTUiIGN5PSIxNSIgcj0iMS4yIi8+PGNpcmNsZSBjeD0iMTA2IiBjeT0iMzciIHI9IjEuMiIvPjxjaXJjbGUgY3g9IjEwMiIgY3k9IjMzIiByPSIxLjIiLz48Y2lyY2xlIGN4PSI5NiIgY3k9IjEzIiByPSIwLjciLz48Y2lyY2xlIGN4PSI5IiBjeT0iMjMiIHI9IjEuMCIvPjxjaXJjbGUgY3g9IjYwIiBjeT0iMSIgcj0iMS4zIi8+PGNpcmNsZSBjeD0iNDciIGN5PSIzNiIgcj0iMC42Ii8+PGNpcmNsZSBjeD0iMTUiIGN5PSIzNiIgcj0iMS4yIi8+PGNpcmNsZSBjeD0iNTEiIGN5PSIyOCIgcj0iMS4yIi8+PGNpcmNsZSBjeD0iODQiIGN5PSIyNCIgcj0iMS4yIi8+PGNpcmNsZSBjeD0iMTUiIGN5PSIyIiByPSIxLjMiLz48Y2lyY2xlIGN4PSI4MCIgY3k9IjE0IiByPSIxLjMiLz48Y2lyY2xlIGN4PSI1MyIgY3k9IjIxIiByPSIwLjYiLz48Y2lyY2xlIGN4PSI5IiBjeT0iMjIiIHI9IjAuNyIvPjxjaXJjbGUgY3g9IjExNyIgY3k9IjE2IiByPSIwLjkiLz48Y2lyY2xlIGN4PSIxMDQiIGN5PSIyMCIgcj0iMC45Ii8+PGNpcmNsZSBjeD0iMTIwIiBjeT0iMTciIHI9IjAuNyIvPjxjaXJjbGUgY3g9Ijc5IiBjeT0iMjAiIHI9IjAuNyIvPjxjaXJjbGUgY3g9IjI0IiBjeT0iNiIgcj0iMC42Ii8+PGNpcmNsZSBjeD0iNDQiIGN5PSIzMCIgcj0iMS4yIi8+PGNpcmNsZSBjeD0iNTAiIGN5PSIyNiIgcj0iMS4xIi8+PGNpcmNsZSBjeD0iMTA5IiBjeT0iMzUiIHI9IjAuOSIvPjxjaXJjbGUgY3g9IjY1IiBjeT0iMTAiIHI9IjAuNiIvPjxjaXJjbGUgY3g9Ijk2IiBjeT0iNCIgcj0iMC42Ii8+PGNpcmNsZSBjeD0iODciIGN5PSIyNCIgcj0iMS4xIi8+PGNpcmNsZSBjeD0iMTIwIiBjeT0iMzAiIHI9IjEuMSIvPjwvZz48L3N2Zz4K"); }
+.stamp.live { color: var(--live); } .stamp.quiet { color: var(--ink-2); }
+.big { text-align: right; flex: none; max-width: 560px; }
+.big b { display: block; font-size: 96px; font-weight: 850; font-stretch: 68%; line-height: 0.85; white-space: nowrap; }
+.big span { font-size: 19px; font-weight: 720; color: var(--ink-3); letter-spacing: 0.09em; text-transform: uppercase; }
+.big span i { font-style: normal; color: var(--ink-2); letter-spacing: 0; text-transform: none; font-size: 22px; font-weight: 600; }
+.brand { position: absolute; right: 64px; top: 50px; }
+.wordmark { position: relative; display: inline-flex; align-items: center; background: var(--paper); color: var(--ink); padding: 0.16em 0.42em 0.12em 0.95em;
+  font-size: 34px; font-weight: 850; font-stretch: 68%; line-height: 1; letter-spacing: -0.01em; transform: rotate(2deg);
+  box-shadow: 0 2px 0 rgb(0 0 0 / 0.18), 0 10px 18px -8px rgb(40 20 0 / 0.55); }
+.wordmark .pin { --pin: 0.42em; left: 0.24em; top: 50%; margin-top: -0.21em; }
+</style>
+</head>
+<body>
+<div id="card"></div>
+<script>
+const ICONS = {
+  calendar: '<path d="M8 2v3"/><path d="M16 2v3"/><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M3 10h18"/>',
+  pin: '<path d="M20 10c0 4.993-5.539 10.193-7.399 11.799a1 1 0 0 1-1.202 0C9.539 20.193 4 14.993 4 10a8 8 0 0 1 16 0"/><circle cx="12" cy="10" r="3"/>',
+  users: '<path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><path d="M16 3.128a4 4 0 0 1 0 7.744"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><circle cx="9" cy="7" r="4"/>',
+};
+const icon = (name) => `<svg class="icon" viewBox="0 0 24 24">${ICONS[name]}</svg>`;
+const esc = (s) => String(s ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c]);
+
+/** Shrink text until it fits `height` px; past `min`, cut it at whole lines with an ellipsis. */
+function fit(el, max, min, height) {
+  let size = max;
+  el.style.fontSize = `${size}px`;
+  while (size > min && el.scrollHeight > height + 1) el.style.fontSize = `${--size}px`;
+  if (el.scrollHeight > height + 1) {
+    el.classList.add("clamp");
+    el.style.webkitLineClamp = String(Math.max(1, Math.floor(height / parseFloat(getComputedStyle(el).lineHeight))));
+  }
+}
+
+function fitLine(el, max, min) {
+  let size = max;
+  el.style.fontSize = `${size}px`;
+  while (size > min && el.scrollWidth > el.clientWidth) el.style.fontSize = `${--size}px`;
+}
+
+/** Draw one hackathon. `D` is a share.Card as a dict, plus `logo` (a data: URI or null). */
+window.render = async (D) => {
+  const facts = [
+    D.when && `<span>${icon("calendar")}${esc(D.when)}</span>`,
+    `<span>${icon("pin")}${esc(D.where)}</span>`,
+    D.team && `<span>${icon("users")}${esc(D.team)}</span>`,
+  ].filter(Boolean);
+  const big = D.prize
+    ? `<div class="big"><b>${esc(D.prize)}</b><span>prize pool${D.prize_alt ? ` <i>${esc(D.prize_alt)}</i>` : ""}</span></div>`
+    : D.registered
+      ? `<div class="big"><b>${esc(D.registered)}</b><span>registered so far</span></div>`
+      : "";
+  const stamp = D.stamp ? `<span class="stamp ${D.stamp.tone}">${esc(D.stamp.label)} · ${esc(D.stamp.date)}</span>` : "";
+  const kind = D.kind !== "Hackathon" ? ` · ${esc(D.kind)}` : "";
+  document.getElementById("card").innerHTML = `
+    <article class="poster ${D.stock}">
+      <span class="pin"></span>
+      <header class="head">
+        ${D.logo ? `<img src="${esc(D.logo)}" alt="">` : ""}
+        <div class="letter"><span class="platform">${esc(D.platform)}${kind}</span>${D.organizer ? `<span class="org">${esc(D.organizer)}</span>` : ""}</div>
+      </header>
+      <h1 class="title">${esc(D.title)}</h1>
+      <div class="facts">${facts.join("")}</div>
+      <div class="spacer"></div>
+      <footer class="foot"><div>${stamp}</div>${big}</footer>
+    </article>
+    <div class="brand"><span class="wordmark"><span class="pin"></span>Hackmash</span></div>`;
+  await document.fonts.ready;
+  await Promise.all([...document.images].map((img) => img.decode().catch(() => img.remove())));
+  fit(document.querySelector(".title"), 112, 50, 216);
+  const b = document.querySelector(".big b");
+  if (b) fitLine(b, 96, 56);
+};
+</script>
+</body>
+</html>

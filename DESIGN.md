@@ -46,6 +46,8 @@ Strategy: restrained. A cork field, with paper carrying the content and two inks
 - **Tabs in the tracker** (`.tabcard`): perforated top edge (mask). Won is green stock, shortlisted yellow, finished grey.
 - **Report card**: a ruled marksheet table, not a hero-metric block.
 - **Buttons**: paper with a hairline border (`.btn`), `--ink` for primary actions, `--pen` for the visitor's own actions, ghost buttons on cork.
+- **Link-preview poster** (`backend/hackmash/og/poster.html`, 1200×630): one notice filling the frame on cork, chosen from four mocks on 2026-11-11. Letterhead (logo, platform · format, organizer), the condensed title as large as it fits (up to 112 px, cut with "…" past 4 lines), a facts line with icons (when, where, team), the deadline stamp bottom-left and the prize pool (or registrations) large bottom-right, with the pinned wordmark plate top-right. Paper stock follows the format, as on the board. Dates are absolute in the event's own calendar, never countdowns.
+  - Provenance: drawn by headless Chromium on the home server from scraped listing data and each event's own logo. The site's default card, `frontend/public/og-default.jpg`, is `docs/promo/github-social-preview.png` (real screenshots of the board) as a JPEG.
 
 ## Depth and shape
 

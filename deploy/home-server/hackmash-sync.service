@@ -10,7 +10,7 @@ Type=oneshot
 WorkingDirectory=@REPO@/backend
 # HACKMASH_INGEST_KEY, HACKMASH_API and HACKMASH_DATA_DIR
 EnvironmentFile=%h/.config/hackmash/sync.env
-ExecStart=@UV@ run --frozen --no-dev hackmash sync
+ExecStart=@UV@ run --frozen --no-dev --extra og hackmash sync
 TimeoutStartSec=30min
 Nice=10
 IOSchedulingClass=idle

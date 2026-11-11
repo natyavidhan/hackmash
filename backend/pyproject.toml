@@ -18,6 +18,11 @@ dependencies = [
 [project.scripts]
 hackmash = "hackmash.cli:main"
 
+[project.optional-dependencies]
+og = [
+    "playwright>=1.65",
+]
+
 [dependency-groups]
 dev = [
     "pytest>=8.3",
