@@ -273,6 +273,7 @@ class Devfolio(Source):
             mode=mode,
             location=location,
             city=city if mode != "online" else None,
+            state=state if mode != "online" else None,
             country=country if mode != "online" else None,
             starts_at=to_utc(row.get("starts_at")),
             ends_at=to_utc(row.get("ends_at")),

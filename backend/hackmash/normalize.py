@@ -11,6 +11,7 @@ from datetime import datetime
 from functools import lru_cache
 
 from .countries import COUNTRIES
+from .geo import locate
 from .models import Hackathon, RawHackathon, make_uid
 
 # ---------------------------------------------------------------------------
@@ -438,6 +439,7 @@ def normalize(
     last_seen_at: datetime | None = None,
 ) -> Hackathon:
     city, country, code = resolve_place(raw)
+    spot = locate(raw, city, code)
     duration = None
     if raw.starts_at and raw.ends_at and raw.ends_at > raw.starts_at:
         duration = round((raw.ends_at - raw.starts_at).total_seconds() / 3600, 1)
@@ -446,7 +448,10 @@ def normalize(
         id=make_uid(raw.source, raw.source_id),
         title=_clean_title(raw.title),
         kind=infer_kind(raw),
-        city=city,
+        city=spot.city,
+        state=spot.state,
+        lat=spot.lat,
+        lng=spot.lng,
         country=country,
         region=region_of(code),
         themes=classify_themes(raw),

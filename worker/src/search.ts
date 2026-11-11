@@ -34,6 +34,8 @@ export function search(items: Item[], p: URLSearchParams, names: Record<string, 
   const themes = list(p, "theme");
   const audiences = list(p, "audience");
   const countries = list(p, "country");
+  const states = list(p, "state");
+  const cities = list(p, "city");
   const regions = list(p, "region");
   const statuses = new Set(list(p, "status").length ? list(p, "status") : ["open", "live", "upcoming"]);
   const minPrize = Number(p.get("min_prize_usd") ?? 0) || 0;
@@ -48,6 +50,8 @@ export function search(items: Item[], p: URLSearchParams, names: Record<string, 
     if (themes.length && !(it.themes ?? []).some((t) => themes.includes(t))) continue;
     if (audiences.length && !(it.audience ?? []).some((a) => audiences.includes(a))) continue;
     if (countries.length && !countries.includes(it.country ?? "")) continue;
+    if (states.length && !states.includes(it.state ?? "")) continue;
+    if (cities.length && !cities.includes(it.city ?? "")) continue;
     if (regions.length && !regions.includes(it.region ?? "")) continue;
     if (minPrize && (it.prize_usd ?? 0) < minPrize) continue;
     if (beginner && !it.beginner_friendly) continue;
@@ -57,7 +61,7 @@ export function search(items: Item[], p: URLSearchParams, names: Record<string, 
     if (it.delisted && status !== "live") continue; // the platform took it down
     let score = 0;
     if (terms.length) {
-      const text = [it.title, it.organizer, it.tagline, it.location, it.city, it.country, names[it.source], ...(it.tags ?? [])]
+      const text = [it.title, it.organizer, it.tagline, it.location, it.city, it.state, it.country, names[it.source], ...(it.tags ?? [])]
         .filter(Boolean)
         .join(" ")
         .toLowerCase();

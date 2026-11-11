@@ -329,6 +329,15 @@ def as_int(value: Any) -> int | None:
         return None
 
 
+def as_float(value: Any) -> float | None:
+    try:
+        if value in (None, ""):
+            return None
+        return float(str(value).replace(",", ""))
+    except (TypeError, ValueError):
+        return None
+
+
 def mode_from(text: Any) -> str | None:
     """Map free-text like "Online", "offline", "In-person", "Hybrid" to a Mode."""
     if text is None:

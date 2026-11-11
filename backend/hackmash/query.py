@@ -45,6 +45,8 @@ class Query:
     theme: list[str] = field(default_factory=list)
     audience: list[str] = field(default_factory=list)
     country: list[str] = field(default_factory=list)
+    state: list[str] = field(default_factory=list)  # Indian state or union territory
+    city: list[str] = field(default_factory=list)
     region: list[str] = field(default_factory=list)
     status: list[str] = field(default_factory=list)  # open | live | upcoming | ended
     min_prize_usd: float | None = None
@@ -80,7 +82,7 @@ class LoadedCatalog:
                 str(x)
                 for x in (
                     it.get("title"), it.get("organizer"), it.get("tagline"), it.get("location"),
-                    it.get("city"), it.get("country"), it.get("source_name"), *(it.get("tags") or []),
+                    it.get("city"), it.get("state"), it.get("country"), it.get("source_name"), *(it.get("tags") or []),
                 )
                 if x
             ).lower()
@@ -134,6 +136,10 @@ class LoadedCatalog:
             if query.audience and not set(query.audience) & set(it.get("audience", [])):
                 continue
             if query.country and it.get("country") not in query.country:
+                continue
+            if query.state and it.get("state") not in query.state:
+                continue
+            if query.city and it.get("city") not in query.city:
                 continue
             if query.region and it.get("region") not in query.region:
                 continue

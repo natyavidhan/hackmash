@@ -51,6 +51,9 @@ class RawHackathon(BaseModel):
     location: str | None = None  # display string, e.g. "Bengaluru, Karnataka, India"
     city: str | None = None
     country: str | None = None  # full English name or ISO-3166 alpha-2 code
+    state: str | None = None  # state or province the platform names, e.g. "Karnataka"
+    lat: float | None = None  # coordinates the platform publishes; normalised to the city's
+    lng: float | None = None
 
     starts_at: datetime | None = None
     ends_at: datetime | None = None

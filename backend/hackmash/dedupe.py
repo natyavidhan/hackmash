@@ -95,7 +95,7 @@ def _richness(h: Hackathon) -> float:
 
 
 _FILL_FIELDS = (
-    "organizer", "tagline", "description", "image_url", "logo_url", "mode", "location", "city", "country",
+    "organizer", "tagline", "description", "image_url", "logo_url", "mode", "location", "city", "state", "country",
     "region", "starts_at", "ends_at", "registration_opens_at", "registration_deadline",
     "submission_deadline", "timezone", "prize_text", "prize_amount", "prize_currency", "prize_usd",
     "non_cash_prizes", "participants", "team_size_min", "team_size_max", "registration_fee",
@@ -110,6 +110,9 @@ def _merge(primary: Hackathon, others: list[Hackathon]) -> Hackathon:
         for f in _FILL_FIELDS:
             if data.get(f) in (None, "", []) and o.get(f) not in (None, "", []):
                 data[f] = o[f]
+        # a pin only travels with its own city
+        if data.get("lat") is None and o.get("lat") is not None and data.get("city") == o.get("city"):
+            data["lat"], data["lng"] = o["lat"], o["lng"]
         for f in ("tags", "themes", "audience", "eligibility"):
             for v in o.get(f) or []:
                 if v not in data[f]:

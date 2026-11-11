@@ -8,14 +8,18 @@ the local server (``hackmash serve``) serves it as-is.
 
 from __future__ import annotations
 
+import logging
 import re
 from datetime import datetime, timedelta, timezone
 from typing import Any
 
 from .dedupe import dedupe
+from .geo import unplaced
 from .models import Hackathon, closed_out, lifecycle
 from .normalize import AUDIENCES, KINDS, MODES, REGIONS, STATIC_USD_RATES, THEME_LABELS, normalize
 from .state import State, dumps
+
+log = logging.getLogger(__name__)
 
 CATALOG_VERSION = 1
 ENDED_KEEP = timedelta(days=90)  # ended events stay reachable by direct link this long
@@ -103,6 +107,14 @@ def build_catalog(state: State, now: datetime | None = None) -> bytes:
     enabled = {k for k, cls in registry.items() if cls.enabled}
     items = sorted(build_items(state, now, enabled), key=_sort_key)
     rates = {**STATIC_USD_RATES, **state.fx_rates, "USD": 1.0}
+
+    missing = unplaced([h for h in items if on_board(h, now)])
+    if missing:  # worth an alias in geo.py when a real city keeps turning up here
+        log.info(
+            "map: %d in-person listings in India have no pin: %s",
+            sum(missing.values()),
+            "; ".join(f"{place} ({n})" for place, n in missing.most_common(12)),
+        )
 
     per_source: dict[str, int] = {}  # what each platform contributes to the board right now
     for h in items:

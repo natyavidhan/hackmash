@@ -523,6 +523,7 @@ class Unstop(Source):
             mode=mode,
             location=location,
             city=city if mode != "online" else None,
+            state=state if mode != "online" else None,
             country=country if mode != "online" else None,
             starts_at=starts,
             ends_at=ends,

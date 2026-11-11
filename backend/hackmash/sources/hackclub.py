@@ -21,7 +21,7 @@ from typing import Any
 import httpx
 
 from ..models import RawHackathon
-from .base import Source, clean_text, get_json, to_utc
+from .base import Source, as_float, clean_text, get_json, to_utc
 from .mlh import local_timezone
 
 log = logging.getLogger(__name__)
@@ -112,6 +112,8 @@ class HackClub(Source):
             location=location,
             city=city,
             country=code or country_full,
+            lat=as_float(row.get("latitude")),
+            lng=as_float(row.get("longitude")),
             starts_at=starts_at,
             ends_at=ends_at,
             timezone=tz,

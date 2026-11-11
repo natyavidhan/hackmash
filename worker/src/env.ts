@@ -19,6 +19,7 @@ export interface Item {
   tagline?: string;
   location?: string;
   city?: string;
+  state?: string;
   country?: string;
   region?: string;
   starts_at?: string;
