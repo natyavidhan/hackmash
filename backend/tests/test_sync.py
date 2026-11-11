@@ -178,3 +178,30 @@ def test_dry_run_changes_nothing_and_wrong_key_fails():
     bad = IngestClient("https://example.test", "nope", client=httpx.Client(transport=httpx.MockTransport(fake)))
     with pytest.raises(IngestError, match="401"):
         push(catalog([item(i) for i in range(120)]), bad)
+
+
+def test_sync_waits_for_the_network_after_a_reboot(monkeypatch):
+    import socket
+
+    from hackmash import cli
+
+    answers = iter([OSError("no network yet"), OSError("still none"), None])
+
+    def fake_getaddrinfo(host, port):
+        assert host == "hackmash.xyz"
+        err = next(answers)
+        if err:
+            raise err
+        return [("ok",)]
+
+    naps = []
+    monkeypatch.setattr(socket, "getaddrinfo", fake_getaddrinfo)
+    monkeypatch.setattr(cli.time, "sleep", naps.append)
+    assert cli.wait_for_network("https://hackmash.xyz", timeout=60, interval=5) is True
+    assert naps == [5, 5]
+
+    def never(host, port):
+        raise OSError("offline")
+
+    monkeypatch.setattr(socket, "getaddrinfo", never)
+    assert cli.wait_for_network("https://hackmash.xyz", timeout=0) is False

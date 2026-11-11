@@ -2,8 +2,8 @@
 [Unit]
 Description=Hackmash: fetch every hackathon platform and update the site's database
 Documentation=https://github.com/natyavidhan/hackmash#keeping-it-fresh-the-home-server
-Wants=network-online.target
-After=network-online.target
+# A user unit can't order itself after network-online.target (a system target), so
+# after a reboot `hackmash sync` itself waits up to 3 minutes for the network.
 
 [Service]
 Type=oneshot

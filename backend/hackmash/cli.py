@@ -208,11 +208,38 @@ def _cmd_push(args: argparse.Namespace) -> int:
     return _push_catalog(args)
 
 
+def wait_for_network(url: str, timeout: float = 180.0, interval: float = 5.0) -> bool:
+    """Wait until the site's host name resolves.
+
+    A run that was missed while the machine was off starts right after boot, and a
+    systemd *user* timer cannot wait for network-online.target (that is a system
+    target), so the job waits here instead of failing every fetch.
+    """
+    import socket
+    from urllib.parse import urlparse
+
+    host = urlparse(url).hostname or url
+    deadline = time.monotonic() + timeout
+    while True:
+        try:
+            socket.getaddrinfo(host, 443)
+            return True
+        except OSError:
+            if time.monotonic() >= deadline:
+                return False
+            time.sleep(interval)
+
+
 def _cmd_sync(args: argparse.Namespace) -> int:
+    from .sync import DEFAULT_API
+
     with _run_lock() as got:
         if not got:
             print("another sync is already running; leaving it to finish")
             return 0
+        api = args.api or os.environ.get("HACKMASH_API") or DEFAULT_API
+        if not wait_for_network(api):
+            print("still no network after 3 minutes; trying anyway")
         started = time.monotonic()
         if _cmd_refresh(argparse.Namespace(keys=[])) != 0:
             print("some platforms failed; they keep their previous listings")

@@ -224,12 +224,26 @@ Scraping needs real CPython and a few hundred outbound requests, so it runs on a
 
 ```bash
 git clone https://github.com/natyavidhan/hackmash ~/services/hackmash
-cp ~/services/hackmash/deploy/home-server/sync.env.example ~/.config/hackmash/sync.env
-#   ... set HACKMASH_INGEST_KEY to the Worker's INGEST_KEY, and HACKMASH_DATA_DIR
-~/services/hackmash/deploy/home-server/install.sh --now
+~/services/hackmash/deploy/home-server/install.sh         # first time: creates ~/.config/hackmash/sync.env
+#   put the Worker's INGEST_KEY into ~/.config/hackmash/sync.env (HACKMASH_INGEST_KEY=...)
+~/services/hackmash/deploy/home-server/install.sh --now   # installs the timer and runs one sync
 ```
 
-Watch it with `journalctl --user -u hackmash-sync` and `systemctl --user list-timers`. Update it with `git -C ~/services/hackmash pull`. Stop it with `systemctl --user disable --now hackmash-sync.timer`.
+It runs at 00:17, 03:17, 06:17 … UTC, each time up to 10 minutes later at random, and takes about two minutes.
+
+**Restarts.** The job is a systemd *user* timer, enabled in `~/.config/systemd/user`, so it comes back by itself after a reboot:
+
+- With lingering on, your user's systemd starts at boot, so nobody has to log in. `install.sh` checks it; turn it on once with `sudo loginctl enable-linger $USER`.
+- `Persistent=true`: a run missed while the machine was off happens right after boot. `hackmash sync` first waits up to 3 minutes for the network, because a user timer can't wait for the system's `network-online.target`.
+- The code (`~/services/hackmash`), the key (`~/.config/hackmash/sync.env`) and the state (`HACKMASH_DATA_DIR`, `~/.local/share/hackmash` in the example config) are ordinary files, so a restart loses nothing.
+
+| To | Run |
+|---|---|
+| See when it last ran and runs next | `systemctl --user list-timers hackmash-sync.timer` |
+| Read its log (add `-f` to follow a run) | `journalctl --user -u hackmash-sync` |
+| Run it now (returns when it's done, about two minutes) | `systemctl --user start hackmash-sync` |
+| Update the code (applies from the next run) | `git -C ~/services/hackmash pull`, then `deploy/home-server/install.sh` if `deploy/home-server/` changed |
+| Stop it | `systemctl --user disable --now hackmash-sync.timer` |
 
 ## Project layout
 
