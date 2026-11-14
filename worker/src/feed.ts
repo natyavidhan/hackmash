@@ -26,17 +26,22 @@ export interface Feed {
 
 const RECHECK_MS = 60_000;
 
+// Only finished data is kept between requests, never a pending promise. Workers
+// drop a promise once the request that created it has ended (say its visitor
+// left mid-load), so a shared one never settles: on 2026-11-14 every later
+// request in that isolate waited on one and failed with a 500.
 let current: Feed | undefined;
-let inflight: Promise<Feed | null> | undefined;
 
 /** The current feed, or null before the first sync has run. */
 export async function getFeed(env: Env, ctx: ExecutionContext, origin: string): Promise<Feed | null> {
   if (current && Date.now() - current.checkedAt < RECHECK_MS) return current;
   if (current) {
-    ctx.waitUntil(load(env, ctx, origin).catch((err) => console.error("feed refresh failed", err)));
+    // one re-check a minute: requests meanwhile serve this feed, and if the check fails the next minute retries
+    current.checkedAt = Date.now();
+    ctx.waitUntil(build(env, ctx, origin).catch((err) => console.error("feed refresh failed", err)));
     return current;
   }
-  return load(env, ctx, origin);
+  return build(env, ctx, origin);
 }
 
 /** After a commit: rebuild on the next request in this isolate. */
@@ -50,13 +55,6 @@ export function parsedFeed(feed: Feed): { items: Item[]; sources: SourceInfo[] }
     feed.parsed = { items: doc.items, sources: doc.sources };
   }
   return feed.parsed;
-}
-
-function load(env: Env, ctx: ExecutionContext, origin: string): Promise<Feed | null> {
-  inflight ??= build(env, ctx, origin).finally(() => {
-    inflight = undefined;
-  });
-  return inflight;
 }
 
 const cacheKey = (origin: string, version: string) => new Request(`${origin}/__feed/${encodeURIComponent(version)}`);
